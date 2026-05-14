@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSZA Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Arxa plan şəkli üçün xüsusi bölmə */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Bura öz şəkil linkini qoya bilərsən */
+            background-image: url('https://images.unsplash.com/photo-1614850523296-e8c041de4394?q=80&w=2070');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.6); /* Şəkli bir az tündləşdirir ki, yazılar görünsün */
+            z-index: -1;
+        }
+
+        .overlay {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Giriş Qutusu (Glassmorphism) */
+        .login-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            margin-bottom: 30px;
+        }
+
+        .login-box input {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            font-size: 16px;
+            width: 250px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .ok-btn {
+            padding: 12px 25px;
+            margin-left: 10px;
+            background-color: #4ade80;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .ok-btn:hover {
+            background-color: #22c55e;
+            transform: scale(1.05);
+        }
+
+        /* Alt Düymələr */
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: 0.4s;
+            letter-spacing: 2px;
+        }
+
+        .yarat {
+            background-color: #38bdf8;
+            color: #0f172a;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+        }
+
+        .yarat:hover {
+            background-color: #0ea5e9;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
+        }
+
+        .kodla {
+            background-color: #f472b6;
+            color: white;
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+        }
+
+        .kodla:hover {
+            background-color: #db2777;
+            box-shadow: 0 0 25px rgba(244, 114, 182, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background"></div>
+
+    <div class="overlay">
+        <div class="login-box">
+            <h2 style="margin-bottom: 20px; color: white;">GİRİŞ</h2>
+            <input type="text" id="username" placeholder="İstifadəçi adı...">
+            <button class="ok-btn" onclick="checkUser()">OK</button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="main-btn yarat" onclick="action('YARAT')">YARAT</button>
+            <button class="main-btn kodla" onclick="action('KODLA QOŞUL')">KODLA QOŞUL</button>
+        </div>
+    </div>
+
+    <script>
+        function checkUser() {
+            let name = document.getElementById('username').value;
+            if(name) {
+                alert("Xoş gəldin, " + name + "!");
+            } else {
+                alert("Zəhmət olmasa istifadəçi adını daxil et.");
+            }
+        }
+
+        function action(type) {
+            console.log(type + " rejimi seçildi.");
+            alert(type + " düyməsinə basıldı!");
+        }
+    </script>
+
+</body>
+</html>
