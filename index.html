@@ -6,313 +6,44 @@
     <title>TDV-MAFIA</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        
-        body, html { 
-            height: 100%; 
-            overflow: hidden; 
-            background-color: #000; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-.background {
-    /* Ölçünü sən istədiyin kimi saxlayırıq */
-    width: 150%; 
-    height: 150%;
-    
-    /* Şəklin yolu */
-    background-image: url(''); 
-    
-    /* BU 3 SƏTİR QARALIĞI ARADAN QALDIRACAQ: */
-    background-position: center center; /* Şəklin tam ortasını hədəf alır */
-    background-size: cover;            /* Şəkli boşluq qalmayacaq şəkildə yayır */
-    background-repeat: no-repeat;      /* Şəklin təkrarlanmasının qarşısını alır */
-
-    /* Şəkli ekranın düz ortasına bərkitmək üçün: */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Şəkli kənarlardan mərkəzə çəkir */
-    
-    filter: brightness(0.5); 
-    z-index: -1;
-}
-        }
-
-       .background {
-    /* Ölçünü sən istədiyin kimi saxlayırıq */
-    width: 150%; 
-    height: 150%;
-    
-    /* Şəklin yolu */
-    background-image: url(''); 
-    
-    /* BU 3 SƏTİR QARALIĞI ARADAN QALDIRACAQ: */
-    background-position: center center; /* Şəklin tam ortasını hədəf alır */
-    background-size: cover;            /* Şəkli boşluq qalmayacaq şəkildə yayır */
-    background-repeat: no-repeat;      /* Şəklin təkrarlanmasının qarşısını alır */
-
-    /* Şəkli ekranın düz ortasına bərkitmək üçün: */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Şəkli kənarlardan mərkəzə çəkir */
-    
-    filter: brightness(0.5); 
-    z-index: -1;
-}
-        }
-
-        .overlay {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-        }
-
-        h1 { 
-            font-size: 4.5rem; 
-            margin-bottom: 20px; 
-            color: #ff0000; 
-            text-shadow: 0 0 20px black, 0 0 10px red;
-            letter-spacing: 10px;
-        }
-
-        .login-box {
-            background: rgba(0, 0, 0, 0.85);
-            padding: 35px;
-            border: 3px solid #ff0000;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
-            min-width: 350px;
-        }
-
-        .user-info-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #userDisplay { 
-            color: #4ade80; 
-            font-weight: bold; 
-            font-size: 1.4rem; 
-            text-transform: uppercase;
-        }
-
-        .edit-name-btn {
-            font-size: 0.8rem;
-            color: #aaa;
-            text-decoration: underline;
-            cursor: pointer;
-            background: none;
-            border: none;
-            transition: 0.3s;
-        }
-
-        .edit-name-btn:hover { color: white; }
-
-        input { 
-            padding: 15px; 
-            border: 1px solid #ff0000; 
-            background: #000; 
-            color: white; 
-            outline: none; 
-            width: 250px; 
-            font-size: 1.1rem;
-            text-align: center;
-        }
-
-        .ok-btn {
-            padding: 15px 30px;
-            background-color: #ff0000;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .ok-btn:hover { background-color: #b30000; }
-
-        .action-buttons { display: flex; gap: 30px; }
-
-        .main-btn {
-            padding: 18px 50px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #ff0000;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            transition: 0.4s;
-            text-transform: uppercase;
-        }
-
-        .main-btn:hover { 
-            background: #ff0000; 
-            box-shadow: 0 0 20px #ff0000;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="background-container">
-        <div class="background"></div>
-    </div>
-
-    <div class="overlay" id="mainContent">
-        <h1>TDV-MAFIA</h1>
-
-        <div class="login-box">
-            <!-- Ad görünən və dəyişmə düyməsi olan yer -->
-            <div id="userInfo" class="user-info-area" style="display: none;">
-                <div id="userDisplay"></div>
-                <button class="edit-name-btn" onclick="enableEdit()">[ADI DƏYİŞ]</button>
-            </div>
-
-            <!-- Giriş paneli -->
-            <div id="inputBox">
-                <input type="text" id="nameInp" placeholder="LƏQƏBİNİ YAZ...">
-                <button class="ok-btn" onclick="savePlayer()">OK</button>
-            </div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="main-btn" onclick="openYarat()">YARAT</button>
-            <button class="main-btn">KODLA QOŞUL</button>
-        </div>
-    </div>
-
-    <script>
-        window.onload = function() {
-            const saved = localStorage.getItem("mafia_nickname");
-            if(saved) {
-                showUser(saved);
-            }
-        }
-
-        function savePlayer() {
-            let val = document.getElementById("nameInp").value.trim();
-            if(val === "") return;
-            
-            // Random rəqəm əlavə et
-            let finalName = val + Math.floor(10 + Math.random() * 89);
-            localStorage.setItem("mafia_nickname", finalName);
-            showUser(finalName);
-        }
-
-        function showUser(name) {
-            document.getElementById("userDisplay").innerText = "AGENT: " + name;
-            document.getElementById("inputBox").style.display = "none";
-            document.getElementById("userInfo").style.display = "flex";
-        }
-
-        function enableEdit() {
-            // Yaddaşı təmizləmirik, sadəcə girişi yenidən açırıq
-            document.getElementById("inputBox").style.display = "block";
-            document.getElementById("userInfo").style.display = "none";
-            document.getElementById("nameInp").focus();
-        }
-
-        function openYarat() {
-            document.getElementById("mainContent").innerHTML = `
-                <h1 style="font-size:3rem;">OTAQ AYARLARI</h1>
-                <div class="login-box">
-                    <p style="color:white; margin-bottom:20px;">Yeni mafia sessiyası başladılır...</p>
-                    <button class="ok-btn" onclick="location.reload()">GERİ QAYIT</button>
-                </div>
-            `;
-        }
-    </script>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="az">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV-MAFIA | Giriş</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         body, html { height: 100%; overflow: hidden; background-color: #000; }
-        
-        .background-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
-        }
-        .background {
-            width: 100%; height: 100%;
-            background-image: url('babba.jpg'); 
-            background-size: cover; background-position: center; filter: brightness(0.7); 
-        }
-
-        .overlay {
-            height: 100%; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; color: white; text-align: center;
-        }
-
+        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .background { width: 100%; height: 100%; background-image: url('babba.jpg'); background-size: cover; background-position: center; filter: brightness(0.7); }
+        .overlay { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
         h1 { font-size: 5rem; margin-bottom: 30px; color: #ff0000; text-shadow: 2px 2px 5px #000; letter-spacing: 15px; }
-
-        .content-box { background: none; border: none; margin-bottom: 40px; }
-
+        .content-box { background: none; margin-bottom: 40px; }
         #userDisplay { color: #4ade80; font-weight: bold; font-size: 1.6rem; text-transform: uppercase; text-shadow: 2px 2px 4px #000; }
-
         input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.2); color: white; outline: none; width: 280px; font-size: 1.2rem; text-align: center; }
-
         .ok-btn { padding: 15px 30px; background-color: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; }
-
         .action-buttons { display: flex; gap: 40px; }
-
-        .main-btn {
-            padding: 20px 60px; font-size: 1.5rem; font-weight: bold; cursor: pointer;
-            border: 3px solid #ff0000; background: none; color: #ff0000; transition: 0.4s; text-transform: uppercase;
-        }
+        .main-btn { padding: 20px 60px; font-size: 1.5rem; font-weight: bold; cursor: pointer; border: 3px solid #ff0000; background: none; color: #ff0000; transition: 0.4s; text-transform: uppercase; }
         .main-btn:hover { background: #ff0000; color: white; }
     </style>
 </head>
 <body>
-
-    <div class="background-container">
-        <div class="background"></div>
-    </div>
-
+    <div class="background-container"><div class="background"></div></div>
     <div class="overlay">
         <h1>TDV-MAFIA</h1>
-        
         <div class="content-box">
             <div id="userInfo" style="display: none; margin-bottom: 20px;">
                 <div id="userDisplay"></div>
                 <p onclick="enableEdit()" style="color: #ff0000; cursor: pointer; text-decoration: underline;">[DƏYİŞ]</p>
             </div>
-
             <div id="inputBox">
                 <input type="text" id="nameInp" placeholder="LƏQƏBİN...">
                 <button class="ok-btn" onclick="savePlayer()">OK</button>
             </div>
         </div>
-
         <div class="action-buttons">
-            <!-- Buradan digər fayla keçid edirik -->
             <button class="main-btn" onclick="location.href='yarat.html'">YARAT</button>
             <button class="main-btn">QOŞUL</button>
         </div>
     </div>
-
     <script>
         window.onload = function() {
             const saved = localStorage.getItem("mafia_nickname");
             if(saved) showUser(saved);
         }
-
         function savePlayer() {
             let val = document.getElementById("nameInp").value.trim();
             if(val === "") return;
@@ -320,13 +51,11 @@
             localStorage.setItem("mafia_nickname", finalName);
             showUser(finalName);
         }
-
         function showUser(name) {
             document.getElementById("userDisplay").innerText = "AGENT: " + name;
             document.getElementById("inputBox").style.display = "none";
             document.getElementById("userInfo").style.display = "block";
         }
-
         function enableEdit() {
             document.getElementById("inputBox").style.display = "block";
             document.getElementById("userInfo").style.display = "none";
