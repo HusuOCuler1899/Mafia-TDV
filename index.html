@@ -28,10 +28,8 @@
         }
 
         .background {
-            /* İstədiyin 150% ölçü bura tətbiq olundu */
             width: 150%; 
             height: 150%;
-            /* Şəklin adını GitHub-da necə qoymusansa ora yaz (məs: babba.jpg) */
             background-image: url('babba.jpg'); 
             background-size: cover;
             background-position: center;
@@ -65,15 +63,34 @@
             border-radius: 10px;
             margin-bottom: 30px;
             box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+            min-width: 350px;
+        }
+
+        .user-info-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
 
         #userDisplay { 
-            margin-bottom: 20px; 
             color: #4ade80; 
             font-weight: bold; 
             font-size: 1.4rem; 
             text-transform: uppercase;
         }
+
+        .edit-name-btn {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-decoration: underline;
+            cursor: pointer;
+            background: none;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .edit-name-btn:hover { color: white; }
 
         input { 
             padding: 15px; 
@@ -93,11 +110,10 @@
             border: none;
             cursor: pointer;
             font-weight: bold;
-            margin-left: 5px;
             transition: 0.3s;
         }
 
-        .ok-btn:hover { background-color: #b30000; transform: scale(1.05); }
+        .ok-btn:hover { background-color: #b30000; }
 
         .action-buttons { display: flex; gap: 30px; }
 
@@ -116,7 +132,6 @@
         .main-btn:hover { 
             background: #ff0000; 
             box-shadow: 0 0 20px #ff0000;
-            transform: translateY(-5px);
         }
     </style>
 </head>
@@ -130,7 +145,13 @@
         <h1>TDV-MAFIA</h1>
 
         <div class="login-box">
-            <div id="userDisplay"></div>
+            <!-- Ad görünən və dəyişmə düyməsi olan yer -->
+            <div id="userInfo" class="user-info-area" style="display: none;">
+                <div id="userDisplay"></div>
+                <button class="edit-name-btn" onclick="enableEdit()">[ADI DƏYİŞ]</button>
+            </div>
+
+            <!-- Giriş paneli -->
             <div id="inputBox">
                 <input type="text" id="nameInp" placeholder="LƏQƏBİNİ YAZ...">
                 <button class="ok-btn" onclick="savePlayer()">OK</button>
@@ -144,7 +165,6 @@
     </div>
 
     <script>
-        // Səhifə yüklənəndə yaddaşda ad varmı?
         window.onload = function() {
             const saved = localStorage.getItem("mafia_nickname");
             if(saved) {
@@ -156,7 +176,7 @@
             let val = document.getElementById("nameInp").value.trim();
             if(val === "") return;
             
-            // Adın sonuna 2 random rəqəm əlavə edirik (Təkrarlanmasın deyə)
+            // Random rəqəm əlavə et
             let finalName = val + Math.floor(10 + Math.random() * 89);
             localStorage.setItem("mafia_nickname", finalName);
             showUser(finalName);
@@ -165,6 +185,14 @@
         function showUser(name) {
             document.getElementById("userDisplay").innerText = "AGENT: " + name;
             document.getElementById("inputBox").style.display = "none";
+            document.getElementById("userInfo").style.display = "flex";
+        }
+
+        function enableEdit() {
+            // Yaddaşı təmizləmirik, sadəcə girişi yenidən açırıq
+            document.getElementById("inputBox").style.display = "block";
+            document.getElementById("userInfo").style.display = "none";
+            document.getElementById("nameInp").focus();
         }
 
         function openYarat() {
