@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSZA Platform</title>
+    <title>TDV-MAFIA</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body, html {
@@ -17,18 +17,15 @@
             overflow: hidden;
         }
 
-        /* Arxa plan şəkli üçün xüsusi bölmə */
         .background {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            /* Bura öz şəkil linkini qoya bilərsən */
-            background-image: url('https://images.unsplash.com/photo-1614850523296-e8c041de4394?q=80&w=2070');
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            /* Bura şəklin internet linkini qoyarsan */
+            background-image: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070');
             background-size: cover;
             background-position: center;
-            filter: brightness(0.6); /* Şəkli bir az tündləşdirir ki, yazılar görünsün */
+            filter: brightness(0.4);
             z-index: -1;
         }
 
@@ -38,86 +35,68 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            color: white;
         }
 
-        /* Giriş Qutusu (Glassmorphism) */
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            text-shadow: 0 0 15px red;
+        }
+
         .login-box {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #555;
             text-align: center;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
-        .login-box input {
-            padding: 12px 20px;
+        #usernameDisplay {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 5px;
             border: none;
-            border-radius: 8px;
+            width: 200px;
             outline: none;
-            font-size: 16px;
-            width: 250px;
-            background: rgba(255, 255, 255, 0.9);
         }
 
         .ok-btn {
-            padding: 12px 25px;
-            margin-left: 10px;
-            background-color: #4ade80;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
+            padding: 10px 20px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            background-color: white; /* Rəngi sən dəyişərsən */
             transition: 0.3s;
         }
 
-        .ok-btn:hover {
-            background-color: #22c55e;
-            transform: scale(1.05);
-        }
-
-        /* Alt Düymələr */
         .action-buttons {
             display: flex;
-            gap: 20px;
+            gap: 25px;
         }
 
         .main-btn {
-            padding: 15px 40px;
-            font-size: 1.2rem;
+            padding: 15px 35px;
+            font-size: 1.1rem;
             font-weight: bold;
-            text-transform: uppercase;
             border: none;
-            border-radius: 50px;
+            border-radius: 5px;
             cursor: pointer;
             transition: 0.4s;
-            letter-spacing: 2px;
         }
 
-        .yarat {
-            background-color: #38bdf8;
-            color: #0f172a;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-        }
-
-        .yarat:hover {
-            background-color: #0ea5e9;
-            box-shadow: 0 0 25px rgba(56, 189, 248, 0.8);
-        }
-
-        .kodla {
-            background-color: #f472b6;
-            color: white;
-            box-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
-        }
-
-        .kodla:hover {
-            background-color: #db2777;
-            box-shadow: 0 0 25px rgba(244, 114, 182, 0.8);
-        }
+        /* Düymə rəngləri üçün yerlər (Mən müvəqqəti qoydum) */
+        .yarat { background-color: #880808; color: red; }
+        .kodla { background-color: #880808; color: red; }
     </style>
 </head>
 <body>
@@ -125,33 +104,56 @@
     <div class="background"></div>
 
     <div class="overlay">
-        <div class="login-box">
-            <h2 style="margin-bottom: 20px; color: white;">GİRİŞ</h2>
-            <input type="text" id="username" placeholder="İstifadəçi adı...">
-            <button class="ok-btn" onclick="checkUser()">OK</button>
+        <h1>TDV-MAFIA</h1>
+
+        <div class="login-box" id="loginArea">
+            <div id="usernameDisplay"></div>
+            <div id="inputGroup">
+                <input type="text" id="usernameInput" placeholder="Ad seç...">
+                <button class="ok-btn" onclick="saveUser()">OK</button>
+            </div>
         </div>
 
         <div class="action-buttons">
-            <button class="main-btn yarat" onclick="action('YARAT')">YARAT</button>
-            <button class="main-btn kodla" onclick="action('KODLA QOŞUL')">KODLA QOŞUL</button>
+            <button class="main-btn yarat" onclick="yaratScreen()">YARAT</button>
+            <button class="main-btn kodla">KODLA QOŞUL</button>
         </div>
     </div>
 
     <script>
-        function checkUser() {
-            let name = document.getElementById('username').value;
-            if(name) {
-                alert("Xoş gəldin, " + name + "!");
-            } else {
-                alert("Zəhmət olmasa istifadəçi adını daxil et.");
+        // Sayt açılanda yaddaşda ad olub olmadığını yoxla
+        window.onload = function() {
+            let savedName = localStorage.getItem("mafia_username");
+            if(savedName) {
+                showName(savedName);
             }
         }
 
-        function action(type) {
-            console.log(type + " rejimi seçildi.");
-            alert(type + " düyməsinə basıldı!");
+        function saveUser() {
+            let input = document.getElementById("usernameInput").value.trim();
+            if(input === "") return;
+
+            // 1 adamın 1 adı istifadə etməsi (Local simulyasiya)
+            // Real sistemdə bu bazadan yoxlanmalıdır, amma biz burda random rəqəm əlavə edirik
+            let finalName = input;
+            
+            // Əgər ad artıq yaddaşda varsa və yeni ad daxil edilirsə, fərqlilik üçün rəqəm atırıq
+            let randomNum = Math.floor(100 + Math.random() * 900);
+            finalName = input + randomNum;
+
+            localStorage.setItem("mafia_username", finalName);
+            showName(finalName);
+        }
+
+        function showName(name) {
+            document.getElementById("usernameDisplay").innerText = "Oyunçu: " + name;
+            document.getElementById("inputGroup").style.display = "none";
+        }
+
+        function yaratScreen() {
+            // "YARAT" üçün yeni ekran buraya gələcək
+            alert("YARAT ekranı üçün hazırlıq görülür...");
         }
     </script>
-
 </body>
 </html>
