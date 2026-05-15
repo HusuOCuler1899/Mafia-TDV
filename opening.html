@@ -1,1 +1,154 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ROLUNUZ | TDV-MAFIA</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        
+        body, html { 
+            height: 100%; width: 100%; 
+            background-color: #000; /* Arxa plan qara */
+            color: #ff0000; /* Yazılar qırmızı */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
+        .role-container {
+            text-align: center;
+            opacity: 0; /* Başlanğıcda görünməz */
+            transform: scale(0.9);
+            transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+        }
+
+        .role-title {
+            font-size: clamp(3rem, 15vw, 6rem);
+            font-weight: 900;
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+            margin-bottom: 10px;
+        }
+
+        .role-note {
+            font-size: clamp(1rem, 5vw, 1.5rem);
+            color: #ffffff; /* Not hissəsi ağ və ya fərqli rəng ola bilər, amma qırmızı istəsən #ff0000 et */
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+
+        /* Fade-in effekti üçün klass */
+        .fade-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Fade-out effekti üçün klass */
+        .fade-out {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="role-container" id="roleBox">
+        <div class="role-title" id="roleName">...</div>
+        <div class="role-note" id="roleNote">
+            SƏNİN QEYDİN BURADA OLACAQ
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 1. ROLLARI BURADA TƏYİN ET (İstədiyin qədər əlavə edə bilərsən)
+        const roles = ["MAFIA", "DETEKTİV", "HƏKİM", "QƏHBƏ", "GÖT", "DON"];
+
+        // 2. HƏR ROL ÜÇÜN XÜSUSİ QEYDLƏR (İstəsən)
+        const roleNotes = {
+            "MAFIA": "Gecə hər kəsi səssizcə yox et.",
+            "DETEKTİV": "Şübhəliləri araşdır və mafiyanı tap.",
+            "HƏKİM": "Hər gecə bir nəfəri ölümdən xilas et.",
+            "QƏHBƏ": "Hamıya verir.",
+            "GÖT": "Hamı sənin düşmənindir.",
+            "DON": "Mafiyanın başçısı sənsən."
+        };
+
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('join');
+            const me = localStorage.getItem("mafia_nickname");
+
+            if(!code || !me) {
+                window.location.href = "index.html";
+                return;
+            }
+
+            const safeMe = me.replace(/[.#$/\[\]]/g, "_");
+            const roleRef = db.ref('rooms/' + code + '/assignedRoles/' + safeMe);
+
+            // Host rolları bir dəfə random paylayır (əgər hələ paylanmayıbsa)
+            db.ref('rooms/' + code).once('value', snapshot => {
+                const room = snapshot.val();
+                if (room.host === me) {
+                    const players = Object.keys(room.players);
+                    let updates = {};
+                    players.forEach(pKey => {
+                        const randomRole = roles[Math.floor(Math.random() * roles.length)];
+                        updates[pKey] = randomRole;
+                    });
+                    db.ref('rooms/' + code + '/assignedRoles').set(updates);
+                }
+            });
+
+            // Öz rolunu dinlə
+            roleRef.on('value', s => {
+                const myRole = s.val();
+                if (myRole) {
+                    showRole(myRole);
+                }
+            });
+        };
+
+        function showRole(role) {
+            const box = document.getElementById('roleBox');
+            const nameTxt = document.getElementById('roleName');
+            const noteTxt = document.getElementById('roleNote');
+
+            nameTxt.innerText = role;
+            
+            // Əgər həmin rol üçün xüsusi not varsa onu yaz, yoxdursa standart notu saxla
+            if(roleNotes[role]) {
+                noteTxt.innerText = roleNotes[role];
+            }
+
+            // 1 saniyə sonra Fade-In başlasın
+            setTimeout(() => {
+                box.classList.add('fade-in');
+            }, 500);
+
+            // 5 saniyə göstər, sonra Fade-Out başlasın
+            setTimeout(() => {
+                box.classList.remove('fade-in');
+                box.classList.add('fade-out');
+            }, 5500);
+
+            // Tamamilə itəndən sonra (məsələn, oyun sahəsinə keçid üçün)
+            setTimeout(() => {
+                // Bura oyunun əsas səhifəsinin linkini yaza bilərsən
+                // window.location.href = "game.html?join=" + code; 
+                console.log("Rol nümayişi bitdi.");
+            }, 7000);
+        }
+    </script>
+</body>
+</html>
