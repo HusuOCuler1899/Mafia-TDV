@@ -12,7 +12,6 @@
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover; filter: brightness(0.4); }
         
-        /* Otaq Kodu Stili */
         #codeTag { 
             position: absolute; top: 20px; right: 20px; 
             color: #4ade80; border: 2px solid #4ade80; 
@@ -28,7 +27,6 @@
 
         h1, h2 { color: #ff0000; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
 
-        /* Oyunçu Siyahısı */
         .p-list { text-align: left; margin-top: 15px; }
         .p-item { 
             display: flex; justify-content: space-between; align-items: center;
@@ -66,13 +64,14 @@
         <input type="text" id="roomNameInp" placeholder="OTAQ ADI YAZIN...">
         
         <div>
-            <label style="font-size:1.2rem;">OYUNÇU LİMİTİ: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label><br>
-            <input type="range" id="limitRange" min="2" max="30" value="5" oninput="document.getElementById('limitVal').innerText=this.value">
+            <label style="font-size:1.2rem;">OYUNÇU LİMİTİ: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label>
+            <div style="margin-top: 5px;"></div>
+            <input type="range" id="limitRange" min="2" max="30" value="5">
         </div>
 
         <div style="display:flex; gap:10px; justify-content:center;">
-            <button class="btn" onclick="initRoom()">BAŞLAT</button>
-            <button class="btn" style="border-color:#555; color:#555;" onclick="location.href='index.html'">GERİ</button>
+            <button type="button" class="btn" id="startBtn">BAŞLAT</button>
+            <button type="button" class="btn" style="border-color:#555; color:#555;" id="backBtn">GERİ</button>
         </div>
     </div>
 
@@ -82,74 +81,90 @@
             <h3 style="color:#888; font-size:1rem; margin-bottom:10px;">AGENTLƏR:</h3>
             <div id="playersDiv"></div>
         </div>
-        <button class="btn" style="margin-top:30px; width:100%;" onclick="location.href='index.html'">OTAQDAN ÇIX</button>
+        <button type="button" class="btn" style="margin-top:30px; width:100%;" id="exitBtn">OTAQDAN ÇIX</button>
     </div>
 
     <script>
-        // Firebase Konfiqurasiyası
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Otaq yaratmaq funksiyası
-        function initRoom() {
+        document.getElementById("limitRange").addEventListener("input", function() {
+            document.getElementById("limitVal").innerText = this.value;
+        });
+
+        document.getElementById("startBtn").addEventListener("click", function() {
             const name = document.getElementById("roomNameInp").value.trim();
-            if(!name) { alert("Otaq adı yazın!"); return; }
+            if(!name) { 
+                alert("Otaq adı yazın!"); 
+                return; 
+            }
             
             const limit = document.getElementById("limitRange").value;
             const code = "U" + Math.floor(100000 + Math.random() * 899999);
             const host = localStorage.getItem("mafia_nickname") || "Admin";
+            const safeHost = host.replace(/[.#$/\[\]]/g, "_");
 
-            // Firebase-ə məlumatı göndər
-            db.ref('rooms/' + code).set({
+            const newRoomRef = db.ref('rooms/' + code);
+            
+            const roomData = {
                 roomName: name,
                 maxPlayers: parseInt(limit),
                 host: host,
-                players: { [host.replace(/[\.\#\$\/\[\]]/g, "_")]: host }
-            }).then(() => {
-                location.href = "yarat.html?join=" + code;
-            }).catch(err => alert("Firebase xətası!"));
-        }
+                players: {}
+            };
+            roomData.players[safeHost] = host;
 
-        // Lobbini idarə edən əsas funksiya
+            newRoomRef.set(roomData).then(function() {
+                window.location.href = "yarat.html?join=" + code;
+            }).catch(function(err) {
+                alert("Firebase xətası: " + err.message);
+            });
+        });
+
+        document.getElementById("backBtn").addEventListener("click", function() {
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById("exitBtn").addEventListener("click", function() {
+            window.location.href = 'index.html';
+        });
+
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
             const code = params.get('join');
             if(!code) return;
 
             const me = localStorage.getItem("mafia_nickname") || "Agent";
-            const safeMe = me.replace(/[\.\#\$\/\[\]]/g, "_");
+            const safeMe = me.replace(/[.#$/\[\]]/g, "_");
 
-            // Özünü otağa əlavə et
             db.ref('rooms/' + code + '/players/' + safeMe).set(me);
 
-            // Otağı canlı izlə (Dəyişiklik olanda dərhal yenilənsin)
-            db.ref('rooms/' + code).on('value', (snapshot) => {
+            db.ref('rooms/' + code).on('value', function(snapshot) {
                 const room = snapshot.val();
                 if(!room) {
                     alert("Otaq bağlanıb!");
-                    location.href = "index.html";
+                    window.location.href = "index.html";
                     return;
                 }
 
-                // Ekranı dəyişdir
                 document.getElementById("setupArea").style.display = "none";
                 document.getElementById("lobbyArea").style.display = "inline-block";
                 document.getElementById("codeTag").innerText = "KOD: " + code;
                 document.getElementById("codeTag").style.display = "block";
                 document.getElementById("roomTitle").innerText = room.roomName;
 
-                // Oyunçuları göstər
                 const pDiv = document.getElementById("playersDiv");
                 pDiv.innerHTML = "";
-                Object.values(room.players).forEach(pName => {
-                    const isHost = (pName === room.host);
-                    pDiv.innerHTML += `
-                        <div class="p-item">
-                            <span>${pName}</span>
-                            ${isHost ? '<span class="host-tag">HOST</span>' : ''}
-                        </div>`;
-                });
+                
+                const playersObj = room.players;
+                for (const key in playersObj) {
+                    if (playersObj.hasOwnProperty(key)) {
+                        const pName = playersObj[key];
+                        const isHost = (pName === room.host);
+                        pDiv.innerHTML += '<div class="p-item"><span>' + pName + '</span>' + (isHost ? '<span class="host-tag">HOST</span>' : '') + '</div>';
+                    }
+                }
             });
         };
     </script>
