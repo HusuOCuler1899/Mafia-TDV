@@ -11,47 +11,15 @@
         body, html { height: 100%; width: 100%; overflow: hidden; background-color: #000; color: white; text-align: center; }
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover; filter: brightness(0.4); }
-        
-        #codeTag { 
-            position: absolute; top: 20px; right: 20px; 
-            color: #4ade80; border: 2px solid #4ade80; 
-            padding: 10px; font-size: 1.5rem; 
-            background: rgba(0,0,0,0.8); z-index: 10; 
-        }
-
-        .container { 
-            margin-top: 150px; display: inline-block; 
-            width: 450px; background: rgba(0,0,0,0.8); 
-            padding: 25px; border: 2px solid #ff0000; 
-        }
-
+        #codeTag { position: absolute; top: 20px; right: 20px; color: #4ade80; border: 2px solid #4ade80; padding: 10px; font-size: 1.5rem; background: rgba(0,0,0,0.8); z-index: 10; }
+        .container { margin-top: 150px; display: inline-block; width: 450px; background: rgba(0,0,0,0.8); padding: 25px; border: 2px solid #ff0000; }
         h1, h2 { color: #ff0000; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
-
         .p-list { text-align: left; margin-top: 15px; }
-        .p-item { 
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 1.5rem; padding: 12px; border-bottom: 1px solid #333; 
-        }
-
-        .host-tag { 
-            color: #4ade80; font-size: 0.8rem; font-weight: bold;
-            border: 1px solid #4ade80; padding: 3px 6px; 
-        }
-
-        input[type="text"] { 
-            padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.6); 
-            color: white; width: 350px; text-align: center; 
-            font-size: 1.1rem; margin-bottom: 20px; outline: none;
-        }
-
-        .btn { 
-            padding: 15px 40px; font-size: 1.2rem; font-weight: bold; 
-            border: 3px solid #ff0000; background: none; color: #ff0000; 
-            cursor: pointer; text-transform: uppercase; transition: 0.3s;
-        }
-
+        .p-item { display: flex; justify-content: space-between; align-items: center; font-size: 1.5rem; padding: 12px; border-bottom: 1px solid #333; }
+        .host-tag { color: #4ade80; font-size: 0.8rem; font-weight: bold; border: 1px solid #4ade80; padding: 3px 6px; }
+        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.6); color: white; width: 350px; text-align: center; font-size: 1.1rem; margin-bottom: 20px; outline: none; }
+        .btn { padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border: 3px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn:hover { background: #ff0000; color: white; }
-
         input[type="range"] { width: 300px; accent-color: #ff0000; margin-top: 10px; margin-bottom: 20px; }
     </style>
 </head>
@@ -62,13 +30,11 @@
     <div id="setupArea" class="container">
         <h1>OTAQ AYARLARI</h1>
         <input type="text" id="roomNameInp" placeholder="OTAQ ADI YAZIN...">
-        
         <div>
             <label style="font-size:1.2rem;">OYUNÇU LİMİTİ: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label>
-            <div style="margin-top: 5px;"></div>
-            <input type="range" id="limitRange" min="2" max="30" value="5">
+            <br>
+            <input type="range" id="limitRange" min="5" max="30" value="5">
         </div>
-
         <div style="display:flex; gap:10px; justify-content:center;">
             <button type="button" class="btn" id="startBtn">BAŞLAT</button>
             <button type="button" class="btn" style="border-color:#555; color:#555;" id="backBtn">GERİ</button>
@@ -76,7 +42,7 @@
     </div>
 
     <div id="lobbyArea" class="container" style="display:none;">
-        <h2 id="roomTitle" style="border-bottom:1px solid red; padding-bottom:10px;"></h2>
+        <h2 id="roomTitle"></h2>
         <div class="p-list">
             <h3 style="color:#888; font-size:1rem; margin-bottom:10px;">AGENTLƏR:</h3>
             <div id="playersDiv"></div>
@@ -93,41 +59,37 @@
             document.getElementById("limitVal").innerText = this.value;
         });
 
+        document.getElementById("backBtn").addEventListener("click", function() { window.location.href = 'index.html'; });
+
         document.getElementById("startBtn").addEventListener("click", function() {
             const name = document.getElementById("roomNameInp").value.trim();
-            if(!name) { 
-                alert("Otaq adı yazın!"); 
-                return; 
-            }
-            
+            if(!name) return;
             const limit = document.getElementById("limitRange").value;
             const code = "U" + Math.floor(100000 + Math.random() * 899999);
             const host = localStorage.getItem("mafia_nickname") || "Admin";
             const safeHost = host.replace(/[.#$/\[\]]/g, "_");
 
-            const newRoomRef = db.ref('rooms/' + code);
-            
-            const roomData = {
-                roomName: name,
-                maxPlayers: parseInt(limit),
-                host: host,
-                players: {}
-            };
+            const roomData = { roomName: name, maxPlayers: parseInt(limit), host: host, players: {} };
             roomData.players[safeHost] = host;
 
-            newRoomRef.set(roomData).then(function() {
+            db.ref('rooms/' + code).set(roomData).then(function() {
                 window.location.href = "yarat.html?join=" + code;
-            }).catch(function(err) {
-                alert("Firebase xətası: " + err.message);
             });
         });
 
-        document.getElementById("backBtn").addEventListener("click", function() {
-            window.location.href = 'index.html';
-        });
-
+        // Çıxış funksiyası (Bazadan silir)
         document.getElementById("exitBtn").addEventListener("click", function() {
-            window.location.href = 'index.html';
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('join');
+            const me = localStorage.getItem("mafia_nickname");
+            if(code && me) {
+                const safeMe = me.replace(/[.#$/\[\]]/g, "_");
+                db.ref('rooms/' + code + '/players/' + safeMe).remove().then(function() {
+                    window.location.href = 'index.html';
+                });
+            } else {
+                window.location.href = 'index.html';
+            }
         });
 
         window.onload = function() {
@@ -142,11 +104,7 @@
 
             db.ref('rooms/' + code).on('value', function(snapshot) {
                 const room = snapshot.val();
-                if(!room) {
-                    alert("Otaq bağlanıb!");
-                    window.location.href = "index.html";
-                    return;
-                }
+                if(!room) { window.location.href = "index.html"; return; }
 
                 document.getElementById("setupArea").style.display = "none";
                 document.getElementById("lobbyArea").style.display = "inline-block";
@@ -156,14 +114,11 @@
 
                 const pDiv = document.getElementById("playersDiv");
                 pDiv.innerHTML = "";
-                
                 const playersObj = room.players;
                 for (const key in playersObj) {
-                    if (playersObj.hasOwnProperty(key)) {
-                        const pName = playersObj[key];
-                        const isHost = (pName === room.host);
-                        pDiv.innerHTML += '<div class="p-item"><span>' + pName + '</span>' + (isHost ? '<span class="host-tag">HOST</span>' : '') + '</div>';
-                    }
+                    const pName = playersObj[key];
+                    const isHost = (pName === room.host);
+                    pDiv.innerHTML += '<div class="p-item"><span>' + pName + '</span>' + (isHost ? '<span class="host-tag">HOST</span>' : '') + '</div>';
                 }
             });
         };
