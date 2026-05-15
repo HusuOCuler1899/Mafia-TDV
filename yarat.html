@@ -12,43 +12,71 @@
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.3); }
         
-        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; font-size: 1.1rem; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; }
+        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; }
         
-        .container { margin: 80px auto 20px; width: 92%; max-width: 480px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; min-height: 350px; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
+        .container { margin: 80px auto; width: 95%; max-width: 1000px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
         
-        h1, h2 { color: #ff0000; text-transform: uppercase; font-size: 1.6rem; margin-bottom: 25px; text-align: center; letter-spacing: 2px; }
+        h1, h2 { color: #ff0000; text-transform: uppercase; margin-bottom: 20px; text-align: center; }
+
+        /* Siyahını X oxu (soldan sağa) düzmək */
+        .p-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; padding: 10px; }
+        .p-item { background: rgba(255,0,0,0.1); border: 1px solid #ff0000; padding: 15px 25px; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; min-width: 150px; justify-content: center; position: relative; }
+        .host-tag { color: #4ade80; font-size: 0.7rem; border: 1px solid #4ade80; padding: 2px 5px; font-weight: bold; position: absolute; top: -10px; right: 5px; background: #000; }
         
-        .p-list { text-align: left; margin-top: 20px; max-height: 45vh; overflow-y: auto; }
-        .p-item { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; padding: 12px; border-bottom: 1px solid #333; }
-        .host-tag { color: #4ade80; font-size: 0.75rem; border: 1px solid #4ade80; padding: 3px 6px; font-weight: bold; }
+        /* Ayarlar bölməsini X oxu üzrə düzmək */
+        .setup-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; }
+        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; flex: 1; min-width: 250px; text-align: center; outline: none; }
+        .range-box { flex: 1; min-width: 200px; text-align: center; }
         
-        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; width: 100%; text-align: center; margin-bottom: 20px; outline: none; font-size: 1rem; }
-        
-        .btn { padding: 15px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; margin-top: 10px; }
+        .btn { padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn:hover { background: #ff0000; color: white; }
         
-        input[type="range"] { width: 100%; accent-color: #ff0000; margin: 20px 0; height: 10px; }
+        input[type="range"] { width: 100%; accent-color: #ff0000; }
+
+        .action-row { display: flex; gap: 15px; justify-content: center; margin-top: 40px; flex-wrap: wrap; }
+        .action-row .btn { flex: 1; min-width: 200px; }
+
+        /* Geri sayım ekranı */
+        #timerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #countdownText { font-size: 8rem; color: #ff0000; text-shadow: 0 0 30px #ff0000; margin-bottom: 20px; }
+        .timer-info { color: white; font-size: 1.2rem; max-width: 80%; }
+
+        @media (max-width: 600px) {
+            .setup-row { flex-direction: column; }
+            .p-item { width: 45%; font-size: 1rem; }
+            #countdownText { font-size: 5rem; }
+        }
     </style>
 </head>
 <body>
     <div class="bg-container"><div class="bg"></div></div>
     <div id="codeTag" style="display:none;"></div>
 
-    <div id="setupArea" class="container">
-        <h1>OTAQ AYARLARI</h1>
-        <input type="text" id="roomNameInp" placeholder="OTAQ ADI YAZIN">
-        <div style="margin-bottom: 15px;">
-            <label style="font-size:1.1rem;">OYUNÇU LİMİTİ: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label>
-            <input type="range" id="limitRange" min="5" max="30" value="5">
-        </div>
-        <button type="button" class="btn" id="startBtn">OTAĞI AÇ</button>
-        <button type="button" class="btn" style="border-color:#555; color:#555;" onclick="location.href='index.html'">LƏĞV ET</button>
+    <div id="timerOverlay">
+        <h1 id="countdownText">5</h1>
+        <p class="timer-info">OYUN BAŞLAYIR...<br><br><span style="color:#ff4444; font-size:0.9rem;">(Kimsə otağa girsə və ya çıxsa sayım dayanacaq)</span></p>
     </div>
 
-    <div id="lobbyArea" class="container" style="display:none;">
+    <div id="setupArea" class="container">
+        <h1>OTAQ AYARLARI</h1>
+        <div class="setup-row">
+            <input type="text" id="roomNameInp" placeholder="OTAQ ADI">
+            <div class="range-box">
+                <label>LİMİT: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label>
+                <input type="range" id="limitRange" min="5" max="30" value="5">
+            </div>
+            <button type="button" class="btn" id="startBtn">OTAĞI AÇ</button>
+        </div>
+    </div>
+
+    <div id="lobbyArea" class="container" style="display:none; text-align: center;">
         <h2 id="roomTitle"></h2>
         <div class="p-list" id="playersDiv"></div>
-        <button type="button" class="btn" id="exitBtn">OTAQDAN ÇIX</button>
+        
+        <div class="action-row">
+            <button type="button" class="btn" id="startGameBtn" style="display:none;">OYUNU BAŞLAT</button>
+            <button type="button" class="btn" style="border-color:#555; color:#aaa;" id="exitBtn">OTAQDAN ÇIX</button>
+        </div>
     </div>
 
     <script>
@@ -56,67 +84,55 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        document.getElementById("limitRange").oninput = function() { 
-            document.getElementById("limitVal").innerText = this.value; 
-        };
+        let localPlayerCount = 0;
+        let countdownInt = null;
 
-        // OTAQ YARATMA
+        document.getElementById("limitRange").oninput = function() { document.getElementById("limitVal").innerText = this.value; };
+
+        // Otağı yaratmaq
         document.getElementById("startBtn").onclick = function() {
             const name = document.getElementById("roomNameInp").value.trim();
-            if(!name) { alert("Otaq adı mütləqdir!"); return; }
-            
+            if(!name) return;
             const limit = document.getElementById("limitRange").value;
             const code = "U" + Math.floor(100000 + Math.random() * 899999);
             const user = localStorage.getItem("mafia_nickname") || "Anonim";
             const safeUser = user.replace(/[.#$/\[\]]/g, "_");
-
-            const data = { 
-                roomName: name, 
-                maxPlayers: parseInt(limit), 
-                host: user, 
-                players: {} 
-            };
+            
+            // Otağın statusunu "waiting" edirik
+            const data = { roomName: name, maxPlayers: parseInt(limit), host: user, gameState: 'waiting', players: {} };
             data.players[safeUser] = user;
-
-            db.ref('rooms/' + code).set(data).then(() => {
-                location.href = "yarat.html?join=" + code;
-            });
+            db.ref('rooms/' + code).set(data).then(() => { location.href = "yarat.html?join=" + code; });
         };
 
-        // ÇIXIŞ VƏ HOST TRANSFERİ
+        // Otaqdan çıxış məntiqi
         document.getElementById("exitBtn").onclick = function() {
-            const params = new URLSearchParams(window.location.search);
-            const code = params.get('join');
+            const code = new URLSearchParams(window.location.search).get('join');
             const me = localStorage.getItem("mafia_nickname");
-            
             if(code && me) {
                 const safeMe = me.replace(/[.#$/\[\]]/g, "_");
                 const ref = db.ref('rooms/' + code);
-                
                 ref.once('value').then(s => {
-                    const room = s.val();
-                    if(!room) return;
-
-                    // Oyunçunu sil
+                    const room = s.val(); if(!room) return;
                     ref.child('players/' + safeMe).remove().then(() => {
-                        // Əgər çıxan host idisə
                         if(room.host === me) {
                             const pKeys = room.players ? Object.keys(room.players).filter(k => k !== safeMe) : [];
-                            if(pKeys.length > 0) {
-                                // Siyahıda qalan ilk adamı yeni host et
-                                ref.update({ host: room.players[pKeys[0]] });
-                            } else {
-                                // Otaqda kimsə qalmayıbsa otağı sil
-                                ref.remove();
-                            }
+                            if(pKeys.length > 0) ref.update({ host: room.players[pKeys[0]] });
+                            else ref.remove();
                         }
                     }).then(() => location.href = 'index.html');
                 });
-            } else {
-                location.href = 'index.html';
+            } else location.href = 'index.html';
+        };
+
+        // Host tərəfindən oyunu başlatmaq
+        document.getElementById("startGameBtn").onclick = function() {
+            const code = new URLSearchParams(window.location.search).get('join');
+            if(code) {
+                db.ref('rooms/' + code + '/gameState').set('countdown');
             }
         };
 
+        // Səhifə yüklənəndə
         window.onload = function() {
             const code = new URLSearchParams(window.location.search).get('join');
             if(!code) return;
@@ -124,36 +140,67 @@
             const me = localStorage.getItem("mafia_nickname") || "Agent";
             const safeMe = me.replace(/[.#$/\[\]]/g, "_");
             
-            // Otağa daxil olarkən adını əlavə et
+            // Otağa qoşul
             db.ref('rooms/' + code + '/players/' + safeMe).set(me);
-
-            // Canlı izləmə
+            
+            // Canlı data izləmə
             db.ref('rooms/' + code).on('value', s => {
                 const room = s.val();
-                if(!room) { 
-                    alert("Otaq mövcud deyil!"); 
-                    location.href = "index.html"; 
-                    return; 
-                }
+                if(!room) { location.href = "index.html"; return; }
+                
+                const isHost = (me === room.host);
+                const currentPlayersCount = room.players ? Object.keys(room.players).length : 0;
 
+                // Geri sayım vaxtı kimsə girsə/çıxsa sistemi ləğv etmə (Yalnız host bazanı yeniləyir)
+                if (room.gameState === 'countdown' && localPlayerCount > 0 && currentPlayersCount !== localPlayerCount) {
+                    if (isHost) {
+                        db.ref('rooms/' + code + '/gameState').set('waiting');
+                    }
+                }
+                localPlayerCount = currentPlayersCount;
+
+                // UI Ayarlamaları
                 document.getElementById("setupArea").style.display = "none";
                 document.getElementById("lobbyArea").style.display = "block";
                 document.getElementById("codeTag").innerText = "KOD: " + code;
                 document.getElementById("codeTag").style.display = "block";
                 document.getElementById("roomTitle").innerText = room.roomName;
+                document.getElementById("startGameBtn").style.display = isHost ? "inline-block" : "none";
 
+                // Oyunçuları listələ (X oxu üzrə)
                 const pDiv = document.getElementById("playersDiv");
                 pDiv.innerHTML = "";
-                
-                // Oyunçuları listələ
                 Object.values(room.players || {}).forEach(p => {
-                    const isHost = (p === room.host);
-                    pDiv.innerHTML += `
-                        <div class="p-item">
-                            <span>${p}</span>
-                            ${isHost ? '<span class="host-tag">HOST</span>' : ''}
-                        </div>`;
+                    pDiv.innerHTML += `<div class="p-item">${p===room.host ? '<span class="host-tag">HOST</span>' : ''}${p}</div>`;
                 });
+
+                // Oyunun Vəziyyəti (Game State) İdarəetməsi
+                if (room.gameState === 'countdown') {
+                    document.getElementById('timerOverlay').style.display = 'flex';
+                    if (!countdownInt) {
+                        let t = 5;
+                        document.getElementById('countdownText').innerText = t;
+                        countdownInt = setInterval(() => {
+                            t--;
+                            document.getElementById('countdownText').innerText = t;
+                            if (t <= 0) {
+                                clearInterval(countdownInt);
+                                // Vaxt bitdi, host vəziyyəti started edir ki, hamı yönləndirilsin
+                                if (isHost) db.ref('rooms/' + code + '/gameState').set('started');
+                            }
+                        }, 1000);
+                    }
+                } else if (room.gameState === 'started') {
+                    // Sayım bitdi, opening.html səhifəsinə keçid
+                    location.href = "opening.html?join=" + code;
+                } else {
+                    // waiting vəziyyəti - sayımı ləğv et
+                    document.getElementById('timerOverlay').style.display = 'none';
+                    if (countdownInt) {
+                        clearInterval(countdownInt);
+                        countdownInt = null;
+                    }
+                }
             });
         };
     </script>
