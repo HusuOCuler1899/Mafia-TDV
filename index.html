@@ -2,22 +2,30 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TDV-MAFIA | Ana Səhifə</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body, html { height: 100%; width: 100%; overflow: hidden; background-color: #000; }
+        body, html { height: 100%; width: 100%; background-color: #000; overflow: hidden; }
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover; filter: brightness(0.6); }
-        .overlay { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        h1 { font-size: 4rem; color: #ff0000; text-shadow: 0 0 15px #000; letter-spacing: 10px; margin-bottom: 25px; }
-        input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.7); color: white; width: 300px; text-align: center; font-size: 1.1rem; outline: none; }
-        .btn { padding: 15px 35px; background: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
-        .main-btn { padding: 18px 45px; font-size: 1.2rem; font-weight: bold; border: 3px solid #ff0000; background: none; color: #ff0000; cursor: pointer; margin: 10px; text-transform: uppercase; transition: 0.3s; }
+        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.5); }
+        .overlay { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 20px; }
+        
+        h1 { font-size: clamp(2.5rem, 12vw, 4.5rem); color: #ff0000; text-shadow: 0 0 20px #000; letter-spacing: 5px; margin-bottom: 20px; text-align: center; font-weight: 900; }
+        
+        input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.8); color: white; width: 100%; max-width: 320px; text-align: center; font-size: 1.1rem; outline: none; margin-bottom: 12px; }
+        
+        .btn { padding: 15px 30px; background: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; width: 100%; max-width: 320px; transition: 0.3s; }
+        .main-btn { padding: 15px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: rgba(0,0,0,0.6); color: #ff0000; cursor: pointer; width: 100%; max-width: 320px; text-transform: uppercase; margin: 8px 0; transition: 0.3s; }
         .main-btn:hover { background: #ff0000; color: white; }
-        #joinPanel { display: none; flex-direction: column; gap: 10px; align-items: center; margin-top: 20px; }
+        
+        #joinPanel { display: none; flex-direction: column; width: 100%; align-items: center; gap: 10px; }
+        .flex-row { display: flex; gap: 10px; width: 100%; max-width: 320px; }
+        .flex-row .btn { flex: 1; }
+        
+        .change-name-btn { background: none; border: none; color: #888; text-decoration: underline; cursor: pointer; margin-top: 15px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -25,22 +33,22 @@
     <div class="overlay">
         <h1>TDV-MAFIA</h1>
         
-        <div id="loginArea">
+        <div id="loginArea" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
             <input type="text" id="nameInp" placeholder="ADINIZI YAZIN...">
-            <br>
-            <button type="button" class="btn" id="loginBtn">GİRİŞ</button>
+            <button type="button" class="btn" id="loginBtn">SİSTEMƏ GİRİŞ</button>
         </div>
 
-        <div id="menuArea" style="display:none;">
-            <p id="welcomeMsg" style="color:#4ade80; font-size:1.5rem; margin-bottom:20px; font-weight:bold;"></p>
-            <div id="btnGroup">
-                <button type="button" class="main-btn" id="createBtn">YARAT</button>
-                <button type="button" class="main-btn" id="openJoinBtn">QOŞUL</button>
+        <div id="menuArea" style="display:none; width: 100%; text-align: center;">
+            <p id="welcomeMsg" style="color:#4ade80; font-size:1.4rem; margin-bottom:20px; font-weight:bold;"></p>
+            <div id="btnGroup" style="display: flex; flex-direction: column; align-items: center;">
+                <button type="button" class="main-btn" id="createBtn">YENİ OTAQ YARAT</button>
+                <button type="button" class="main-btn" id="openJoinBtn">OTAĞA QOŞUL</button>
+                <button type="button" class="change-name-btn" id="changeNameBtn">ADINI DƏYİŞDİR</button>
             </div>
             
             <div id="joinPanel">
-                <input type="text" id="codeInp" placeholder="OTAQ KODUNU YAZIN">
-                <div style="display:flex; gap:10px;">
+                <input type="text" id="codeInp" placeholder="OTAQ KODU">
+                <div class="flex-row">
                     <button type="button" class="btn" id="submitJoinBtn">DAXİL OL</button>
                     <button type="button" class="btn" style="background:#444;" id="closeJoinBtn">GERİ</button>
                 </div>
@@ -59,44 +67,50 @@
                 document.getElementById("loginArea").style.display = "none";
                 document.getElementById("menuArea").style.display = "block";
                 document.getElementById("welcomeMsg").innerText = "AGENT: " + user;
+            } else {
+                document.getElementById("loginArea").style.display = "flex";
+                document.getElementById("menuArea").style.display = "none";
             }
         }
 
-        document.getElementById("loginBtn").addEventListener("click", function() {
+        document.getElementById("loginBtn").onclick = function() {
             const n = document.getElementById("nameInp").value.trim();
-            if(!n) return;
-            localStorage.setItem("mafia_nickname", n);
-            checkAuth();
-        });
+            if(n) { 
+                localStorage.setItem("mafia_nickname", n); 
+                checkAuth(); 
+            } else {
+                alert("Zəhmət olmasa bir ad yazın!");
+            }
+        };
 
-        document.getElementById("createBtn").addEventListener("click", function() {
-            window.location.href = 'yarat.html';
-        });
+        document.getElementById("changeNameBtn").onclick = function() {
+            if(confirm("Adınızı dəyişmək istəyirsiniz?")) {
+                localStorage.removeItem("mafia_nickname");
+                checkAuth();
+            }
+        };
 
-        document.getElementById("openJoinBtn").addEventListener("click", function() {
+        document.getElementById("createBtn").onclick = () => window.location.href = 'yarat.html';
+
+        document.getElementById("openJoinBtn").onclick = () => {
             document.getElementById("btnGroup").style.display = "none";
             document.getElementById("joinPanel").style.display = "flex";
-        });
+        };
 
-        document.getElementById("closeJoinBtn").addEventListener("click", function() {
+        document.getElementById("closeJoinBtn").onclick = () => {
             document.getElementById("btnGroup").style.display = "flex";
             document.getElementById("joinPanel").style.display = "none";
-        });
+        };
 
-        document.getElementById("submitJoinBtn").addEventListener("click", function() {
+        document.getElementById("submitJoinBtn").onclick = () => {
             const c = document.getElementById("codeInp").value.trim().toUpperCase();
-            if(!c) return;
-            
-            db.ref('rooms/' + c).once('value').then(function(snapshot) {
-                if(snapshot.exists()) {
-                    window.location.href = "yarat.html?join=" + c;
-                } else {
-                    alert("DİQQƏT: Belə bir otaq tapılmadı!");
-                }
-            }).catch(function(err) {
-                alert("Bağlantı xətası!");
-            });
-        });
+            if(c) {
+                db.ref('rooms/' + c).once('value', s => {
+                    if(s.exists()) window.location.href = "yarat.html?join=" + c;
+                    else alert("XƏTA: Belə bir otaq yoxdur!");
+                });
+            }
+        };
 
         window.onload = checkAuth;
     </script>
