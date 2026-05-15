@@ -3,95 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV-MAFIA | Online</title>
-    
+    <title>TDV-MAFIA | Ana Səhifə</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         body, html { height: 100%; width: 100%; overflow: hidden; background-color: #000; }
-        
-        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        .background { 
-            width: 100%; height: 100%; 
-            background-image: url('babba.jpg'); 
-            background-size: cover; 
-            background-position: center; 
-            filter: brightness(0.6); 
-        }
-
-        .overlay { 
-            height: 100%; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; color: white; text-align: center; 
-        }
-
-        h1 { 
-            font-size: clamp(2.5rem, 8vw, 4.5rem); 
-            color: #ff0000; 
-            text-shadow: 0 0 15px #000; 
-            letter-spacing: 10px; 
-            margin-bottom: 25px; 
-            text-transform: uppercase;
-        }
-
-        input { 
-            padding: 15px; border: 2px solid #ff0000; 
-            background: rgba(0, 0, 0, 0.7); 
-            color: white; outline: none; width: 300px; 
-            font-size: 1.1rem; text-align: center; 
-        }
-
-        .btn { 
-            padding: 15px 35px; background: #ff0000; 
-            color: white; border: none; cursor: pointer; 
-            font-weight: bold; text-transform: uppercase; margin-top: 10px;
-        }
-
-        .main-btn { 
-            padding: 18px 45px; font-size: 1.2rem; font-weight: bold; 
-            border: 3px solid #ff0000; background: none; color: #ff0000; 
-            cursor: pointer; margin: 10px; transition: 0.3s; 
-            text-transform: uppercase;
-        }
-
-        .main-btn:hover { background: #ff0000; color: white; box-shadow: 0 0 15px #ff0000; }
-
-        #joinPanel { 
-            display: none; flex-direction: column; 
-            gap: 12px; align-items: center; margin-top: 15px; 
-        }
-
-        #welcomeText { color: #4ade80; font-size: 1.4rem; margin-bottom: 15px; font-weight: bold; }
+        .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover; filter: brightness(0.6); }
+        .overlay { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
+        h1 { font-size: 4rem; color: #ff0000; text-shadow: 0 0 15px #000; letter-spacing: 10px; margin-bottom: 25px; }
+        input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.7); color: white; width: 300px; text-align: center; font-size: 1.1rem; outline: none; }
+        .btn { padding: 15px 35px; background: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
+        .main-btn { padding: 18px 45px; font-size: 1.2rem; font-weight: bold; border: 3px solid #ff0000; background: none; color: #ff0000; cursor: pointer; margin: 10px; text-transform: uppercase; transition: 0.3s; }
+        .main-btn:hover { background: #ff0000; color: white; }
+        #joinPanel { display: none; flex-direction: column; gap: 10px; align-items: center; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-    <div class="background-container">
-        <div class="background"></div>
-    </div>
-
+    <div class="bg-container"><div class="bg"></div></div>
     <div class="overlay">
         <h1>TDV-MAFIA</h1>
         
         <div id="loginArea">
-            <input type="text" id="nameInput" placeholder="AGENT ADI...">
+            <input type="text" id="nameInp" placeholder="ADINIZI YAZIN...">
             <br>
-            <button class="btn" onclick="handleLogin()">GİRİŞ</button>
+            <button class="btn" onclick="saveAgent()">GİRİŞ</button>
         </div>
 
         <div id="menuArea" style="display:none;">
-            <p id="welcomeText"></p>
+            <p id="welcomeMsg" style="color:#4ade80; font-size:1.5rem; margin-bottom:20px; font-weight:bold;"></p>
             <div id="btnGroup">
                 <button class="main-btn" onclick="location.href='yarat.html'">YARAT</button>
                 <button class="main-btn" onclick="openJoin()">QOŞUL</button>
             </div>
             
             <div id="joinPanel">
-                <input type="text" id="codeInput" placeholder="OTAQ KODU (U123456)">
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn" onclick="handleJoin()">QOŞUL</button>
-                    <button class="btn" style="background: #444;" onclick="closeJoin()">GERİ</button>
+                <input type="text" id="codeInp" placeholder="OTAQ KODUNU YAZIN">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="processJoin()">DAXİL OL</button>
+                    <button class="btn" style="background:#444;" onclick="closeJoin()">GERİ</button>
                 </div>
             </div>
         </div>
@@ -101,21 +52,21 @@
         // Firebase Konfiqurasiyası
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const db = firebase.database();
 
-        function handleLogin() {
-            const name = document.getElementById("nameInput").value.trim();
-            if (!name) return;
-            localStorage.setItem("mafia_nickname", name);
-            checkUser();
+        function saveAgent() {
+            const n = document.getElementById("nameInp").value.trim();
+            if(!n) return;
+            localStorage.setItem("mafia_nickname", n);
+            checkAuth();
         }
 
-        function checkUser() {
-            const saved = localStorage.getItem("mafia_nickname");
-            if (saved) {
+        function checkAuth() {
+            const user = localStorage.getItem("mafia_nickname");
+            if(user) {
                 document.getElementById("loginArea").style.display = "none";
                 document.getElementById("menuArea").style.display = "block";
-                document.getElementById("welcomeText").innerText = "AGENT: " + saved;
+                document.getElementById("welcomeMsg").innerText = "AGENT: " + user;
             }
         }
 
@@ -129,25 +80,23 @@
             document.getElementById("joinPanel").style.display = "none";
         }
 
-        function handleJoin() {
-            const code = document.getElementById("codeInput").value.trim().toUpperCase();
-            if (!code) return;
-
-            // Firebase-də otağı axtarırıq
-            database.ref('rooms/' + code).once('value').then((snapshot) => {
-                if (snapshot.exists()) {
-                    location.href = "yarat.html?join=" + code;
+        function processJoin() {
+            const c = document.getElementById("codeInp").value.trim().toUpperCase();
+            if(!c) return;
+            
+            // Firebase-də otağın mövcudluğunu yoxla
+            db.ref('rooms/' + c).once('value').then((snapshot) => {
+                if(snapshot.exists()) {
+                    location.href = "yarat.html?join=" + c;
                 } else {
-                    alert("DİQQƏT: Belə bir otaq tapılmadı! Kodu düz yazdığınızdan əmin olun.");
+                    alert("DİQQƏT: Belə bir otaq tapılmadı!");
                 }
-            }).catch((error) => {
+            }).catch((err) => {
                 alert("Bağlantı xətası!");
-                console.error(error);
             });
         }
 
-        window.onload = checkUser;
+        window.onload = checkAuth;
     </script>
-
 </body>
 </html>
