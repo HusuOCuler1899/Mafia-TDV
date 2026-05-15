@@ -27,39 +27,67 @@
         
         <div id="loginArea">
             <input type="text" id="nameInp" placeholder="ADINIZI YAZIN...">
-            <br>
-            <button class="btn" onclick="saveAgent()">GİRİŞ</button>
+            <div style="margin-top: 10px;"></div>
+            <button type="button" class="btn" id="loginBtn">GİRİŞ</button>
         </div>
 
         <div id="menuArea" style="display:none;">
             <p id="welcomeMsg" style="color:#4ade80; font-size:1.5rem; margin-bottom:20px; font-weight:bold;"></p>
             <div id="btnGroup">
-                <button class="main-btn" onclick="location.href='yarat.html'">YARAT</button>
-                <button class="main-btn" onclick="openJoin()">QOŞUL</button>
+                <button type="button" class="main-btn" id="createBtn">YARAT</button>
+                <button type="button" class="main-btn" id="openJoinBtn">QOŞUL</button>
             </div>
             
             <div id="joinPanel">
                 <input type="text" id="codeInp" placeholder="OTAQ KODUNU YAZIN">
                 <div style="display:flex; gap:10px;">
-                    <button class="btn" onclick="processJoin()">DAXİL OL</button>
-                    <button class="btn" style="background:#444;" onclick="closeJoin()">GERİ</button>
+                    <button type="button" class="btn" id="submitJoinBtn">DAXİL OL</button>
+                    <button type="button" class="btn" style="background:#444;" id="closeJoinBtn">GERİ</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Firebase Konfiqurasiyası
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function saveAgent() {
+        document.getElementById("loginBtn").addEventListener("click", function() {
             const n = document.getElementById("nameInp").value.trim();
             if(!n) return;
             localStorage.setItem("mafia_nickname", n);
             checkAuth();
-        }
+        });
+
+        document.getElementById("createBtn").addEventListener("click", function() {
+            window.location.href = 'yarat.html';
+        });
+
+        document.getElementById("openJoinBtn").addEventListener("click", function() {
+            document.getElementById("btnGroup").style.display = "none";
+            document.getElementById("joinPanel").style.display = "flex";
+        });
+
+        document.getElementById("closeJoinBtn").addEventListener("click", function() {
+            document.getElementById("btnGroup").style.display = "flex";
+            document.getElementById("joinPanel").style.display = "none";
+        });
+
+        document.getElementById("submitJoinBtn").addEventListener("click", function() {
+            const c = document.getElementById("codeInp").value.trim().toUpperCase();
+            if(!c) return;
+            
+            db.ref('rooms/' + c).once('value').then(function(snapshot) {
+                if(snapshot.exists()) {
+                    window.location.href = "yarat.html?join=" + c;
+                } else {
+                    alert("DİQQƏT: Belə bir otaq tapılmadı!");
+                }
+            }).catch(function(err) {
+                alert("Bağlantı xətası!");
+            });
+        });
 
         function checkAuth() {
             const user = localStorage.getItem("mafia_nickname");
@@ -68,32 +96,6 @@
                 document.getElementById("menuArea").style.display = "block";
                 document.getElementById("welcomeMsg").innerText = "AGENT: " + user;
             }
-        }
-
-        function openJoin() {
-            document.getElementById("btnGroup").style.display = "none";
-            document.getElementById("joinPanel").style.display = "flex";
-        }
-
-        function closeJoin() {
-            document.getElementById("btnGroup").style.display = "flex";
-            document.getElementById("joinPanel").style.display = "none";
-        }
-
-        function processJoin() {
-            const c = document.getElementById("codeInp").value.trim().toUpperCase();
-            if(!c) return;
-            
-            // Firebase-də otağın mövcudluğunu yoxla
-            db.ref('rooms/' + c).once('value').then((snapshot) => {
-                if(snapshot.exists()) {
-                    location.href = "yarat.html?join=" + c;
-                } else {
-                    alert("DİQQƏT: Belə bir otaq tapılmadı!");
-                }
-            }).catch((err) => {
-                alert("Bağlantı xətası!");
-            });
         }
 
         window.onload = checkAuth;
