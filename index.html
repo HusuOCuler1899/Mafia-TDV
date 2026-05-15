@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV-MAFIA</title>
+    <title>TDV-MAFIA | Ana Səhifə</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         body, html { height: 100%; overflow: hidden; background-color: #000; }
         .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .background { width: 100%; height: 100%; background-image: url('babba.jpg'); background-size: cover; background-position: center; filter: brightness(0.7); }
+        .background { width: 150%; height: 150%; background-image: url('babba.jpg'); background-size: cover; background-position: center; filter: brightness(0.7); }
         .overlay { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        h1 { font-size: 5rem; margin-bottom: 30px; color: #ff0000; text-shadow: 2px 2px 5px #000; letter-spacing: 15px; }
+        h1 { font-size: 5rem; margin-bottom: 30px; color: #ff0000; text-shadow: 2px 2px 10px #000; letter-spacing: 15px; }
         .content-box { background: none; margin-bottom: 40px; }
-        #userDisplay { color: #4ade80; font-weight: bold; font-size: 1.6rem; text-transform: uppercase; text-shadow: 2px 2px 4px #000; }
-        input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.2); color: white; outline: none; width: 280px; font-size: 1.2rem; text-align: center; }
-        .ok-btn { padding: 15px 30px; background-color: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; }
+        #userDisplay { color: #4ade80; font-weight: bold; font-size: 1.6rem; text-transform: uppercase; text-shadow: 2px 2px 4px #000; margin-bottom: 15px; }
+        input { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.5); color: white; outline: none; width: 300px; font-size: 1.2rem; text-align: center; }
+        .ok-btn { padding: 15px 30px; background-color: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .ok-btn:hover { background: #b30000; }
         .action-buttons { display: flex; gap: 40px; }
         .main-btn { padding: 20px 60px; font-size: 1.5rem; font-weight: bold; cursor: pointer; border: 3px solid #ff0000; background: none; color: #ff0000; transition: 0.4s; text-transform: uppercase; }
-        .main-btn:hover { background: #ff0000; color: white; }
+        .main-btn:hover { background: #ff0000; color: white; box-shadow: 0 0 20px #ff0000; }
+        #joinPanel { display: none; margin-top: 20px; flex-direction: column; gap: 15px; align-items: center; }
     </style>
 </head>
 <body>
@@ -25,20 +27,30 @@
     <div class="overlay">
         <h1>TDV-MAFIA</h1>
         <div class="content-box">
-            <div id="userInfo" style="display: none; margin-bottom: 20px;">
+            <div id="userInfo" style="display: none;">
                 <div id="userDisplay"></div>
-                <p onclick="enableEdit()" style="color: #ff0000; cursor: pointer; text-decoration: underline;">[DƏYİŞ]</p>
+                <p onclick="enableEdit()" style="color: #ff0000; cursor: pointer; text-decoration: underline; margin-bottom: 20px;">[DƏYİŞ]</p>
             </div>
             <div id="inputBox">
-                <input type="text" id="nameInp" placeholder="LƏQƏBİN...">
+                <input type="text" id="nameInp" placeholder="LƏQƏBİNİZ...">
                 <button class="ok-btn" onclick="savePlayer()">OK</button>
             </div>
         </div>
-        <div class="action-buttons">
+
+        <div class="action-buttons" id="mainBtns">
             <button class="main-btn" onclick="location.href='yarat.html'">YARAT</button>
-            <button class="main-btn">QOŞUL</button>
+            <button class="main-btn" onclick="showJoinPanel()">KODLA QOŞUL</button>
+        </div>
+
+        <div id="joinPanel">
+            <input type="text" id="roomCodeInp" placeholder="OTAQ KODU (Məs: U673372)">
+            <div style="display: flex; gap: 10px;">
+                <button class="ok-btn" onclick="joinRoom()">DAXİL OL</button>
+                <button class="ok-btn" style="background: #444;" onclick="hideJoinPanel()">LƏĞV ET</button>
+            </div>
         </div>
     </div>
+
     <script>
         window.onload = function() {
             const saved = localStorage.getItem("mafia_nickname");
@@ -47,7 +59,7 @@
         function savePlayer() {
             let val = document.getElementById("nameInp").value.trim();
             if(val === "") return;
-            let finalName = val + Math.floor(10 + Math.random() * 89);
+            let finalName = val + "#" + Math.floor(10 + Math.random() * 89);
             localStorage.setItem("mafia_nickname", finalName);
             showUser(finalName);
         }
@@ -59,6 +71,33 @@
         function enableEdit() {
             document.getElementById("inputBox").style.display = "block";
             document.getElementById("userInfo").style.display = "none";
+        }
+        function showJoinPanel() {
+            document.getElementById("mainBtns").style.display = "none";
+            document.getElementById("joinPanel").style.display = "flex";
+        }
+        function hideJoinPanel() {
+            document.getElementById("mainBtns").style.display = "flex";
+            document.getElementById("joinPanel").style.display = "none";
+        }
+
+        function joinRoom() {
+            const code = document.getElementById("roomCodeInp").value.trim().toUpperCase();
+            if(code === "") { alert("Kodu yazın!"); return; }
+            
+            const roomData = JSON.parse(localStorage.getItem("active_room_" + code));
+            
+            if(!roomData) {
+                alert("XƏTA: Belə bir otaq tapılmadı!");
+                return;
+            }
+
+            if(roomData.players.length >= roomData.maxPlayers) {
+                alert("WARNING: Otaq artıq doludur! (" + roomData.maxPlayers + " nəfər)");
+                return;
+            }
+
+            location.href = "yarat.html?join=" + code;
         }
     </script>
 </body>
