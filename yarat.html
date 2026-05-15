@@ -6,95 +6,88 @@
     <title>OTAQ</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body, html { height: 100%; overflow: hidden; background-color: #000; }
-        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .background { width: 150%; height: 150%; background-image: url('babba.jpg'); background-size: cover; background-position: center; filter: brightness(0.6); }
-        .overlay { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; position: relative; }
-        #roomNameDisplay { position: absolute; top: 30px; font-size: 2.5rem; color: #ff0000; text-transform: uppercase; letter-spacing: 5px; font-weight: bold; }
-        #roomCodeDisplay { position: absolute; top: 20px; right: 30px; font-size: 1.8rem; color: #4ade80; background: rgba(0, 0, 0, 0.6); padding: 10px; border: 1px solid #4ade80; display: none; }
-        .player-list-container { width: 450px; margin-top: 20px; border-top: 1px solid red; padding-top: 20px; }
-        .player-item { font-size: 1.5rem; margin-bottom: 12px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        body, html { height: 100%; overflow: hidden; background-color: #000; color: white; text-align: center; }
+        .background-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .background { width: 150%; height: 150%; background-image: url('babba.jpg'); background-size: cover; background-position: center; filter: brightness(0.5); position: absolute; top: -25%; left: -25%; }
+        #roomNameHeader { position: absolute; top: 30px; font-size: 2.5rem; color: #ff0000; width: 100%; font-weight: bold; text-transform: uppercase; }
+        #roomCodeTag { position: absolute; top: 20px; right: 30px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; font-size: 1.5rem; }
+        .player-list { width: 450px; margin: 150px auto 20px; border-top: 1px solid red; padding-top: 20px; text-align: left; }
+        .player-item { display: flex; justify-content: space-between; font-size: 1.5rem; padding: 10px; border-bottom: 1px solid #333; }
         .host-tag { color: #4ade80; font-weight: bold; border: 1px solid #4ade80; padding: 2px 8px; font-size: 0.8rem; }
-        .main-btn { padding: 15px 40px; font-size: 1.3rem; font-weight: bold; cursor: pointer; border: 3px solid #ff0000; background: none; color: #ff0000; text-transform: uppercase; }
+        .main-btn { padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border: 2px solid #ff0000; color: #ff0000; background: none; cursor: pointer; text-transform: uppercase; }
         input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: rgba(0,0,0,0.4); color: white; width: 350px; text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="background-container"><div class="background"></div></div>
-    <div class="overlay">
-        <div id="roomNameDisplay"></div>
-        <div id="roomCodeDisplay"></div>
+    <div id="roomNameHeader"></div>
+    <div id="roomCodeTag"></div>
 
-        <div id="setupArea">
-            <h1 style="color:red; margin-bottom:20px;">OTAQ QURULUR</h1>
-            <input type="text" id="roomNameInp" placeholder="OTAQ ADI...">
-            <div style="margin-bottom:20px;">
-                <label>LİMİT: <span id="limitVal" style="color:red; font-size:1.5rem;">5</span></label><br>
-                <input type="range" id="playerRange" min="5" max="30" value="5" oninput="document.getElementById('limitVal').innerText=this.value" style="width:350px; accent-color:red;">
-            </div>
-            <button class="main-btn" onclick="createRoom()">ODA YARAT</button>
+    <div id="setupArea" style="margin-top: 150px;">
+        <h1 style="color:red; margin-bottom:20px;">OTAQ AYARLARI</h1>
+        <input type="text" id="rName" placeholder="OTAQ ADI...">
+        <div style="margin-bottom:20px;">
+            <label>LİMİT: <span id="lVal" style="color:red; font-size:1.5rem;">5</span></label><br>
+            <input type="range" id="rRange" min="5" max="30" value="5" oninput="document.getElementById('lVal').innerText=this.value" style="width:350px; accent-color:red;">
         </div>
-        
-        <div id="roomReadyArea" style="display: none;">
-            <div class="player-list-container">
-                <h3 style="color: red; margin-bottom: 15px;">OYUNÇU SİYAHISI:</h3>
-                <div id="playerList"></div>
-            </div>
-            <button class="main-btn" style="margin-top:20px;" onclick="location.href='index.html'">ÇIXIŞ</button>
+        <button class="main-btn" onclick="createRoom()">YARAT</button>
+    </div>
+
+    <div id="lobbyArea" style="display: none;">
+        <div class="player-list">
+            <h3 style="color: red; margin-bottom: 15px;">OTAQDAKI AGENTLƏR:</h3>
+            <div id="pList"></div>
         </div>
+        <button class="main-btn" onclick="location.href='index.html'">ÇIXIŞ</button>
     </div>
 
     <script>
-        function generateRoomCode() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            return chars.charAt(Math.floor(Math.random()*chars.length)) + Math.floor(100000 + Math.random()*900000);
-        }
+        function generateCode() { return "U" + Math.floor(100000 + Math.random() * 900000); }
 
         function createRoom() {
-            const name = document.getElementById("roomNameInp").value.trim();
-            if(!name) { alert("Ad yaz!"); return; }
-            const max = document.getElementById("playerRange").value;
-            const code = generateRoomCode();
-            const myName = localStorage.getItem("mafia_nickname") || "Oyunçu";
-            
-            const roomInfo = { name: name, maxPlayers: parseInt(max), players: [myName] };
-            localStorage.setItem("active_room_" + code, JSON.stringify(roomInfo));
+            const name = document.getElementById("rName").value.trim();
+            if(!name) return;
+            const limit = document.getElementById("rRange").value;
+            const code = generateCode();
+            const host = localStorage.getItem("mafia_nickname") || "Admin";
 
-            window.location.href = "yarat.html?join=" + code;
-        }
+            const roomInfo = { name: name, maxPlayers: parseInt(limit), players: [host] };
+            localStorage.setItem("room_" + code, JSON.stringify(roomInfo));
 
-        function renderPlayers(players) {
-            const listDiv = document.getElementById("playerList");
-            listDiv.innerHTML = "";
-            players.forEach((p, index) => {
-                listDiv.innerHTML += `<div class="player-item"><span>${p}</span>${index===0?'<span class="host-tag">HOST</span>':''}</div>`;
-            });
+            location.href = "yarat.html?join=" + code;
         }
 
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const joinCode = urlParams.get('join');
-            
-            if(joinCode) {
-                const data = localStorage.getItem("active_room_" + joinCode);
+            const code = new URLSearchParams(window.location.search).get('join');
+            if(code) {
+                let data = localStorage.getItem("room_" + code);
                 if(data) {
-                    const room = JSON.parse(data);
+                    let room = JSON.parse(data);
                     const myName = localStorage.getItem("mafia_nickname") || "Qonaq";
-                    
+
+                    // Əgər siyahıda yoxdursa, əlavə et
                     if(!room.players.includes(myName)) {
                         room.players.push(myName);
-                        localStorage.setItem("active_room_" + joinCode, JSON.stringify(room));
+                        localStorage.setItem("room_" + code, JSON.stringify(room));
                     }
-                    
-                    document.getElementById("roomNameDisplay").innerText = room.name;
-                    document.getElementById("roomCodeDisplay").innerText = "KOD: " + joinCode;
-                    document.getElementById("roomCodeDisplay").style.display = "block";
+
                     document.getElementById("setupArea").style.display = "none";
-                    document.getElementById("roomReadyArea").style.display = "block";
-                    renderPlayers(room.players);
+                    document.getElementById("lobbyArea").style.display = "block";
+                    document.getElementById("roomNameHeader").innerText = room.name;
+                    document.getElementById("roomCodeTag").innerText = "KOD: " + code;
+
+                    const listDiv = document.getElementById("pList");
+                    listDiv.innerHTML = "";
+                    room.players.forEach((p, index) => {
+                        listDiv.innerHTML += `
+                            <div class="player-item">
+                                <span>${p}</span>
+                                ${index === 0 ? '<span class="host-tag">HOST</span>' : ''}
+                            </div>`;
+                    });
                 }
             }
-        }
+        };
     </script>
 </body>
 </html>
