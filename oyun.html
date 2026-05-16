@@ -80,24 +80,24 @@
             text-align: center; padding: 20px; 
         }
         #resultMainText { 
-            font-size: clamp(2rem, 5vw, 4.5rem); 
+            font-size: clamp(2rem, 6vw, 5.5rem); 
             color: #ff0000; font-weight: 900; letter-spacing: 3px; 
-            margin-bottom: 25px; text-shadow: 0 0 30px rgba(255, 0, 0, 0.9); 
-            text-transform: uppercase; line-height: 1.4;
+            margin-bottom: 25px; text-shadow: 0 0 40px rgba(255, 0, 0, 1); 
+            text-transform: uppercase; line-height: 1.5;
         }
-        #resultNote { font-size: 1.5rem; color: #baa7a7; max-width: 700px; margin-top: 15px; font-weight: bold; }
+        #resultNote { font-size: 2rem; color: #baa7a7; max-width: 800px; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="bg-container"><div class="bg"></div></div>
 
-    <header>
+    <header id="mainHeader">
         <div class="phase-title" id="phaseText">SÖHBƏT VAXTI</div>
         <div class="timer-box" id="timerDisplay">30</div>
         <button class="chat-toggle-btn" onclick="toggleChat()">Çat <span id="chatNotif" style="display:none;color:#ffeb3b;">(!)</span></button>
     </header>
 
-    <div class="main-area">
+    <div class="main-area" id="mainAreaContainer">
         <div class="grid-container" id="playerGrid"></div>
         <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP) <span id="skipVoteCount">(0)</span></button>
     </div>
@@ -245,6 +245,8 @@
                 document.getElementById('phaseText').innerText = "SÖHBƏT VAXTI";
                 document.getElementById('skipBtn').style.display = 'none';
                 document.getElementById('resultOverlay').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mainAreaContainer').style.display = 'flex';
                 myVote = null; 
             } 
             else if(currentPhase === 'day_vote') {
@@ -255,15 +257,24 @@
                     document.getElementById('skipBtn').style.display = 'none';
                 }
                 document.getElementById('resultOverlay').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mainAreaContainer').style.display = 'flex';
             } 
             else if(currentPhase === 'day_reveal') {
                 document.getElementById('phaseText').innerText = "SƏSLƏR AÇILDI!";
                 document.getElementById('skipBtn').style.display = 'none';
+                document.getElementById('resultOverlay').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mainAreaContainer').style.display = 'flex';
                 closeModal();
             } 
             else if(currentPhase === 'day_elimination') {
                 document.getElementById('phaseText').innerText = "ASILMA ANI";
                 document.getElementById('skipBtn').style.display = 'none';
+                // Asılma anında arxadakı hər şeyi tamamilə gizlədirik
+                document.getElementById('mainHeader').style.display = 'none';
+                document.getElementById('mainAreaContainer').style.display = 'none';
+                document.getElementById('chatPanel').classList.remove('open');
             }
 
             timerInterval = setInterval(() => {
@@ -445,12 +456,12 @@
             });
         }
 
-        // ASILMA NƏTİCƏSİNİN VƏ ROLUN TAM EKRANDA GÖSTƏRİLMƏSİ (Məhz bura düzəldildi)
+        // ASILMA NƏTİCƏSİNİN VƏ ROLUN TAM EKRANDA GÖSTƏRİLMƏSİ
         function listenToElimination() {
             db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
                 const result = snap.val();
                 
-                if(!result || currentPhase !== 'day_elimination') {
+                if(!result) {
                     document.getElementById('resultOverlay').style.display = 'none';
                     return;
                 }
@@ -468,21 +479,19 @@
                     const realRole = rolesData[result] || "Dinc Sakin";
                     
                     mainTextEl.style.color = "#ff0000";
-                    mainTextEl.style.textShadow = "0 0 30px rgba(255, 0, 0, 1)";
+                    mainTextEl.style.textShadow = "0 0 40px rgba(255, 0, 0, 1)";
 
-                    // BÖYÜK QIRMIZI HARFLƏRLƏ AD VƏ ROL YAZISI
-                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: ${realRole}`;
+                    // BÖYÜK NƏHƏNG HARFLƏRLƏ AD VƏ ROL YAZISI
+                    mainTextEl.innerHTML = `ASILAN OYUNÇU: ${hungName}<br>ROLU: ${realRole}`;
                     
                     // Rolların xüsusi mexanika emalları
                     if(realRole === "Gizli Mafiya" || realRole === "Hiyləgər Mafiya") { 
-                        // Sən ssenaridə 'Gizli Mafiya' yazmısan, əgər adı fərqlidirsə verilən rola əsasən dəyişdirilə bilər
-                        mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: Dinc Sakin`;
+                        mainTextEl.innerHTML = `ASILAN OYUNÇU: ${hungName}<br>ROLU: Dinc Sakin`;
                         noteEl.innerText = "O, Gizli Mafiya idi! Öldüyü üçün əsl rolu şəhərdən gizlədildi.";
                         if(isHost) db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
                     } 
                     else if(realRole === "Psixopat") {
                         noteEl.innerText = "O, Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
-                        // Psixopat asıldıqda ölmür, ona görə deadPlayers-ə salmırıq.
                     }
                     else if(realRole === "Canlı Bomba") {
                         noteEl.innerText = "O, Canlı Bomba idi! Ona səs verənlərin hamısı partladı!";
@@ -502,8 +511,12 @@
                     }
                 }
                 
-                // Tam qara ekran pəncərəsini açırıq
-                document.getElementById('resultOverlay').style.display = 'flex';
+                // Yalnız day_elimination fazasındaydıqsa tam qara ekran overlay-ini aktiv et
+                if (currentPhase === 'day_elimination') {
+                    document.getElementById('mainHeader').style.display = 'none';
+                    document.getElementById('mainAreaContainer').style.display = 'none';
+                    document.getElementById('resultOverlay').style.display = 'flex';
+                }
             });
         }
 
