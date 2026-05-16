@@ -83,7 +83,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Sənəddəki bütün rolların xüsusi notları (Mətnlər olduğu kimi köçürüldü)
+        // Sənəddəki bütün rolların xüsusi notları
         const roleNotes = {
             "Sadə Mafiya": "Gecələr Mafiya komandası ilə birlikdə səs verərək 1 nəfəri öldürən əsas silahlı qüvvə. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
             "Don": "Mafiyanın rəhbəri. Xəfiyyələr tərəfindən yoxlanıldıqda həmişə günahsız 'Dinc sakin' olaraq görünür. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
@@ -117,7 +117,7 @@
             "Canlı Bomba": "Üzərində partlayıcılar olan sakin. Gecə onu öldürən və ya gündüz onu asan şəxsləri özü ilə bərabər partladıb öldürür. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə (özünü partladıb düşmən öldürsə belə Şəhər qazananda) qalib gəlir."
         };
 
-        // Sənəddə olan oyunçu sayına görə paylanacaq xüsusi rolların siyahısı
+        // Oyunçu sayına görə paylanacaq xüsusi rolların siyahısı
         const poolByCount = {
             5: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"],
             6: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen", "Hakim"],
@@ -147,7 +147,6 @@
             30: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum", "Xəbərçi"]
         };
 
-        // Massivi qarışdırmaq üçün funksiya (Fisher-Yates algorithm)
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -169,33 +168,27 @@
             const safeMe = me.replace(/[.#$/\[\]]/g, "_");
             const roleRef = db.ref('rooms/' + code + '/assignedRoles/' + safeMe);
 
-            // Host otaqdakı real adam sayına görə lazımi rolları çəkir və qarışdırıb paylayır
             db.ref('rooms/' + code).once('value', snapshot => {
                 const room = snapshot.val();
                 if (!room) return;
 
                 if (room.host === me) {
                     db.ref('rooms/' + code + '/assignedRoles').once('value', rSnap => {
-                        // Əgər rollar hələ paylanmayıbsa payla
                         if (!rSnap.exists()) {
                             const players = Object.keys(room.players);
                             const pCount = players.length;
 
-                            // Sənəddə minimum 5, maksimum 30 nəfərlik hovuz var
                             let selectedPool = [];
                             if (pCount >= 5 && pCount <= 30) {
                                 selectedPool = [...poolByCount[pCount]];
                             } else {
-                                // Əgər nəsə səbəbdən 5-dən az olarsa default olaraq 5-lik hovuzdan götürsün
                                 selectedPool = ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"];
                             }
 
-                            // Rolları qarışdırırıq
                             const shuffledRoles = shuffle(selectedPool);
                             
                             let updates = {};
                             players.forEach((pKey, index) => {
-                                // Əgər oyunçu sayısı hovuzdan çoxdursa təhlükəsizlik üçün sivil verir
                                 updates[pKey] = shuffledRoles[index] || "Sadə Mafiya";
                             });
 
@@ -205,46 +198,44 @@
                 }
             });
 
-            // Hər kəs öz xüsusi rolunu bazadan dinləyir
             roleRef.on('value', s => {
                 const myRole = s.val();
                 if (myRole) {
-                    showRole(myRole);
+                    showRole(myRole, code); // Kodu bura əlavə etdik
                 }
             });
         };
 
-        function showRole(role) {
+        function showRole(role, code) { // Kodu funksiyaya qəbul edirik
             const box = document.getElementById('roleBox');
             const nameTxt = document.getElementById('roleName');
             const noteTxt = document.getElementById('roleNote');
 
             nameTxt.innerText = role;
             
-            // Əgər sənəddən köçürülən rola aid xüsusi not varsa bura yazılır
             if(roleNotes[role]) {
                 noteTxt.innerText = roleNotes[role];
             } else {
                 noteTxt.innerText = "Sistem tərəfindən təyin olunan gizli rol.";
             }
 
-            // 1 saniyə sonra Fade-In (ekranda təmiz şriftdə görünmə)
+            // 0.5 saniyə sonra Fade-In başlayır
             setTimeout(() => {
                 box.classList.add('fade-in');
             }, 500);
 
-            // 5 saniyə ekranda qalır, sonra Fade-Out ilə bağlanır
+            // ROLUNU OXUMAQ ÜÇÜN VAXT: 10 saniyə (ümumi 10500ms) ekranda tam qalır, sonra Fade-Out başlayır
             setTimeout(() => {
                 box.classList.remove('fade-in');
                 box.classList.add('fade-out');
-            }, 11000);
+            }, 10500);
 
-            // Animasiya tamamilə bitdikdən sonra növbəti mərhələyə keçid hissəsi
+            // Animasiya bitdikdən sonra növbəti mərhələyə keçid (ümumi 12000ms)
             setTimeout(() => {
                 console.log("Rol nümayişi başa çatdı.");
-                // Bura növbəti əsas oyun ekranının linkini bağlaya bilərsən
-                // window.location.href = "game.html?join=" + code;
-            }, 7000);
+                // Birbaşa oyun.html-a keçid
+                window.location.href = "oyun.html?join=" + code;
+            }, 12000);
         }
     </script>
 </body>
