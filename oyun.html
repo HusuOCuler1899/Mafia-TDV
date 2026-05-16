@@ -108,7 +108,7 @@
             <div class="modal-title" id="voteModalTitle">Əminsən?</div>
             <div class="modal-btns">
                 <button class="btn-yes" id="confirmVoteBtn">BƏLİ, ASILSIN!</button>
-                <button class="btn-no" onclick="closeModal()">LƏGV ET</button>
+                <button class="btn-no" onclick="closeModal()">LƏĞV ET</button>
             </div>
         </div>
     </div>
@@ -324,16 +324,19 @@
             document.getElementById('skipBtn').style.display = 'none';
         };
 
-        // Səslərin Ekranda Görünməsi və Vaxtdan Əvvəl Bitmə Məntiqi
+        // Səslərin Ekranda Görünməsi
         function listenToVotes() {
             db.ref('rooms/' + code + '/votes').on('value', snap => {
                 if(currentPhase === 'day_discuss') return; // Söhbət vaxtı oyları gizlət
                 
                 const votes = snap.val() || {};
-                
                 // Nöqtələri təmizlə
                 document.querySelectorAll('.vote-dots').forEach(el => el.innerHTML = "");
 
+                // Oylama vaxtı yalnız kimin səs verdiyi bilinsin deyə gizli tutula bilər, 
+                // amma Among Usda səs verənin profilində işarə çıxır. 
+                // Reveal fazasında isə asılacaq adamın altında nöqtələr çıxır.
+                
                 if(currentPhase === 'day_reveal' || currentPhase === 'day_elimination') {
                     for(let voter in votes) {
                         const target = votes[voter];
@@ -346,11 +349,146 @@
                     }
                 }
 
-                // AVTOMATİK BİTMƏ MƏNTİQİ: Əgər faza oylama fazasıdırsa və hamı səs veribsə
+                // AVTOMATİK BİTMƏ BLOKU: Əgər səsvermə fazasındaydıqsa və hər kəs səs veribsə
                 if(currentPhase === 'day_vote') {
                     const totalPlayers = Object.keys(playersData);
                     const totalDead = Object.keys(deadPlayers);
                     
-                    // Sağ qalan (diri) oyunçuların sayını hesabla
+                    // Diri oyunçuların sayını çıxarırıq
                     const aliveCount = totalPlayers.filter(p => !totalDead.includes(p)).length;
-                    //
+                    // Verilən ümumi səslərin sayını çıxarırıq
+                    const voteCount = Object.keys(votes).length;
+
+                    // Əgər diri olan hər kəs səs veribsə və bunu yoxlayan otağın hostudursa
+                    if(voteCount >= aliveCount && aliveCount > 0 && isHost) {
+                        setPhase('day_reveal', 10); // Vaxtı gözləmədən reveal fazasına keçir
+                    }
+                }
+            });
+        }
+
+        // Asılma Məntiqi (Yalnız Host hesablayır)
+        function processElimination() {
+            db.ref('rooms/' + code + '/votes').once('value', snap => {
+                const votes = snap.val() || {};
+                let counts = {};
+                let maxVotes = 0;
+                let candidate = null;
+                let isTie = false;
+
+                // Səsləri say
+                for(let voter in votes) {
+                    const target = votes[voter];
+                    if(target === "SKIP") continue;
+                    counts[target] = (counts[target] || 0) + 1;
+                    
+                    if(counts[target] > maxVotes) {
+                        maxVotes = counts[target];
+                        candidate = target;
+                        isTie = false;
+                    } else if(counts[target] === maxVotes) {
+                        isTie = true;
+                    }
+                }
+
+                if(isTie || !candidate) {
+                    db.ref('rooms/' + code + '/eliminationResult').set("TIE");
+                } else {
+                    db.ref('rooms/' + code + '/eliminationResult').set(candidate);
+                }
+
+                setPhase('day_elimination', 10); // 10 saniyə nəticəyə baxış
+            });
+        }
+
+        // Asılma Ekranını İzlə və Xüsusi Rolları Hesabla
+        db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
+            const result = snap.val();
+            if(!result || currentPhase !== 'day_elimination') return;
+
+            const rNameEl = document.getElementById('resultName');
+            const rRoleEl = document.getElementById('resultRole');
+            const rNoteEl = document.getElementById('resultNote');
+
+            if(result === "TIE") {
+                rNameEl.innerText = "HEÇ KİM ASILMADI";
+                rNameEl.style.color = "#888";
+                rRoleEl.innerText = "Səslər bərabər oldu və ya səs verilmədi.";
+                rNoteEl.innerText = "";
+            } else {
+                const hungName = playersData[result];
+                const realRole = rolesData[result];
+                
+                rNameEl.innerText = hungName + " ASILDI!";
+                
+                // XÜSUSİ ROL MƏNTİQİ:
+                if(realRole === "Gizli Mafiya") {
+                    rRoleEl.innerText = "Rolu: Dinc Sakin";
+                    rNoteEl.innerText = "Səsvermədə öldüyü üçün əsl rolu gizlədildi.";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Öldü
+                } 
+                else if(realRole === "Psixopat") {
+                    rRoleEl.innerText = "Rolu: Psixopat";
+                    rNoteEl.innerText = "Lakin o Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
+                    // Ölmədi, deadPlayers-ə əlavə etmirik. (1 canı getdi məntiqi mürəkkəbdir deyə sağ buraxırıq)
+                }
+                else if(realRole === "Canlı Bomba") {
+                    rRoleEl.innerText = "Rolu: Canlı Bomba";
+                    rNoteEl.innerText = "Ona səs verən hər kəs onunla birlikdə partladı!";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
+                    // Bomba partlayışı effektini tam etmək üçün ona səs verənləri də öldür
+                    db.ref('rooms/' + code + '/votes').once('value', vSnap => {
+                        const vs = vSnap.val() || {};
+                        for(let v in vs) { if(vs[v] === result) db.ref('rooms/' + code + '/deadPlayers/' + v).set(true); }
+                    });
+                }
+                else {
+                    rRoleEl.innerText = "Rolu: " + realRole;
+                    rNoteEl.innerText = "";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Normal ölüm
+                }
+            }
+            document.getElementById('resultOverlay').style.display = 'flex';
+        });
+
+        // ÇAT SİSTEMİ
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const txt = input.value.trim();
+            if(!txt) return;
+            
+            db.ref('rooms/' + code + '/chat').push({
+                sender: me,
+                msg: txt,
+                time: Date.now()
+            });
+            input.value = "";
+        }
+
+        // Enter ilə mesaj göndərmək
+        document.getElementById('chatInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") { event.preventDefault(); sendMessage(); }
+        });
+
+        function listenToChat() {
+            db.ref('rooms/' + code + '/chat').on('child_added', snap => {
+                const data = snap.val();
+                const box = document.getElementById('chatMessages');
+                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
+                box.scrollTop = box.scrollHeight;
+
+                const panel = document.getElementById('chatPanel');
+                if(!panel.classList.contains('open') && data.sender !== me) {
+                    document.getElementById('chatNotif').style.display = 'inline';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
