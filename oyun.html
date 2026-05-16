@@ -29,19 +29,19 @@
             gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; max-height: 80vh;
         }
         
-        /* Oyunçu Qutusu (Among Us Tərzi) */
+        /* Oyunçu Qutusu */
         .player-card { 
             background: rgba(0,0,0,0.7); border: 2px solid #444; border-radius: 8px; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             padding: 5px; cursor: pointer; position: relative; transition: 0.2s; text-align: center;
         }
         .player-card.active-vote:hover { border-color: #ff0000; background: rgba(255,0,0,0.2); }
-        .player-card.dead { filter: grayscale(100%) opacity(0.5); pointer-events: none; }
+        .player-card.dead { filter: grayscale(100%) opacity(0.5); pointer-events: none; border-color: #222 !important; }
         .player-card.voted-for { border-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); }
         
         .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
         
-        /* Səs İkonları (Kim kimə səs verib) */
+        /* Səs İkonları */
         .vote-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 5px; min-height: 12px; width: 100%; }
         .vote-dot { width: 12px; height: 12px; background: #ff0000; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 5px #000; }
 
@@ -49,7 +49,7 @@
         .skip-btn { margin-top: 10px; background: #555; color: white; padding: 12px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #888; border-radius: 5px; cursor: pointer; display: none; }
         .skip-btn:hover { background: #777; }
 
-        /* Çat Sistemi (Sürüşərək açılan) */
+        /* Çat Sistemi */
         #chatPanel { 
             position: fixed; top: 60px; right: -350px; width: 300px; height: calc(100% - 60px); 
             background: rgba(0,0,0,0.95); border-left: 2px solid #ff0000; transition: right 0.3s ease; 
@@ -63,7 +63,7 @@
         .chat-input-area input { flex-grow: 1; padding: 8px; background: #222; color: white; border: 1px solid #555; outline: none; }
         .chat-input-area button { background: #ff0000; color: white; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; }
 
-        /* Təsdiq Modalı (Əminsən?) */
+        /* Təsdiq Modalı */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal-box { background: #111; border: 2px solid #ff0000; padding: 30px; text-align: center; border-radius: 10px; max-width: 400px; width: 90%; }
         .modal-title { font-size: 1.5rem; color: white; margin-bottom: 20px; }
@@ -72,12 +72,20 @@
         .btn-yes { background: #ff0000; color: white; }
         .btn-no { background: #555; color: white; }
 
-        /* Nəticə və Asılma Ekranı (Tam Ekran Overlay) */
-        #resultOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; text-align: center; padding: 20px; }
-        #resultName { font-size: clamp(2.5rem, 8vw, 5rem); color: #ff0000; font-weight: 900; letter-spacing: 5px; margin-bottom: 15px; text-shadow: 0 0 20px #ff0000; text-transform: uppercase; }
-        #resultRole { font-size: 1.5rem; color: #fff; margin-bottom: 10px; }
-        #resultNote { font-size: 1.2rem; color: #aaa; max-width: 600px; }
-
+        /* Nəticə və Asılma Ekranı (Tam Qara Ekran) */
+        #resultOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000000; display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 3000; 
+            text-align: center; padding: 20px; 
+        }
+        #resultMainText { 
+            font-size: clamp(2.2rem, 6vw, 4.5rem); 
+            color: #ff0000; font-weight: 900; letter-spacing: 3px; 
+            margin-bottom: 25px; text-shadow: 0 0 30px rgba(255, 0, 0, 0.7); 
+            text-transform: uppercase; line-height: 1.3;
+        }
+        #resultNote { font-size: 1.5rem; color: #baa7a7; max-width: 700px; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -90,8 +98,7 @@
     </header>
 
     <div class="main-area">
-        <div class="grid-container" id="playerGrid">
-            </div>
+        <div class="grid-container" id="playerGrid"></div>
         <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP) <span id="skipVoteCount">(0)</span></button>
     </div>
 
@@ -114,8 +121,7 @@
     </div>
 
     <div id="resultOverlay">
-        <div id="resultName"></div>
-        <div id="resultRole"></div>
+        <div id="resultMainText"></div>
         <div id="resultNote"></div>
     </div>
 
@@ -138,8 +144,9 @@
         let myVote = null;
         let selectedTarget = null;
         let rolesData = {};
+        let gridBuilt = false;
 
-        // Səhifə yüklənəndə dataları çək
+        // Otaq məlumatlarını bir dəfə çək və əsas dinləyiciləri başlat
         db.ref('rooms/' + code).once('value', snapshot => {
             const room = snapshot.val();
             if(!room) { window.location.href = "index.html"; return; }
@@ -149,19 +156,37 @@
             rolesData = room.assignedRoles || {};
             deadPlayers = room.deadPlayers || {};
 
-            buildGrid();
-
             // Söhbət fazasını başlat (Yalnız host idarə edir ki sinxron olsun)
             if(isHost && room.gameState !== 'day_discuss') {
                 setPhase('day_discuss', 30);
-                db.ref('rooms/' + code + '/votes').remove(); // Əvvəlki oyları sil
-                db.ref('rooms/' + code + '/eliminationResult').remove(); // Əvvəlki nəticəni sil
+                db.ref('rooms/' + code + '/votes').remove(); 
+                db.ref('rooms/' + code + '/eliminationResult').remove(); 
             }
 
-            listenToGameState();
+            listenToRoomUpdates();
             listenToVotes();
             listenToChat();
         });
+
+        // Həm oyunçu vəziyyətlərini, həm də fazaları izləyən əsas sinxronizasiya funksiyası
+        function listenToRoomUpdates() {
+            db.ref('rooms/' + code).on('value', snap => {
+                const room = snap.val();
+                if(!room) return;
+                
+                playersData = room.players || {};
+                deadPlayers = room.deadPlayers || {};
+                rolesData = room.assignedRoles || {};
+
+                // Grid hər dəfə tam dataya görə sıfırdan qurulur və ya yenilənir
+                buildGrid();
+
+                if(room.gameState !== currentPhase) {
+                    currentPhase = room.gameState;
+                    handlePhaseChange(room);
+                }
+            });
+        }
 
         // 30 Nəfərlik Cədvəlin Yaradılması
         function buildGrid() {
@@ -169,7 +194,6 @@
             grid.innerHTML = "";
             const pKeys = Object.keys(playersData);
             
-            // 30 xana mütləq yaradılır, boş qalanlar transparan olur
             for(let i=0; i<30; i++) {
                 const card = document.createElement('div');
                 card.className = 'player-card';
@@ -179,45 +203,30 @@
                     const pName = playersData[sName];
                     card.id = "card_" + sName;
                     
-                    if(deadPlayers[sName]) card.classList.add('dead');
+                    if(deadPlayers[sName]) {
+                        card.classList.add('dead');
+                    }
 
                     card.innerHTML = `
                         <div class="p-name" id="nameText_${sName}">${pName}</div>
                         <div class="vote-dots" id="dots_${sName}"></div>
                     `;
 
-                    // Klikləmə hadisəsi (Yalnız oylama vaxtı və diri adamlara)
+                    // Əgər oylama vaxtıdırsa və klikləyən də, hədəf də diridirsə
+                    if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
+                        card.classList.add('active-vote');
+                    }
+
                     card.onclick = () => {
                         if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
                             openModal(sName, pName);
                         }
                     };
                 } else {
-                    card.style.visibility = "hidden"; // Boş xanalar
+                    card.style.visibility = "hidden"; 
                 }
                 grid.appendChild(card);
             }
-        }
-
-        // Faza Vəziyyətini İzləmək
-        function listenToGameState() {
-            db.ref('rooms/' + code).on('value', snap => {
-                const room = snap.val();
-                if(!room) return;
-                
-                deadPlayers = room.deadPlayers || {};
-                
-                // Ölü adamların üstündən xətt çək / qaralt
-                Object.keys(deadPlayers).forEach(sName => {
-                    const card = document.getElementById("card_" + sName);
-                    if(card) card.classList.add('dead');
-                });
-
-                if(room.gameState !== currentPhase || room.phaseEndTime) {
-                    currentPhase = room.gameState;
-                    handlePhaseChange(room);
-                }
-            });
         }
 
         let timerInterval = null;
@@ -232,69 +241,57 @@
                 
                 document.getElementById('timerDisplay').innerText = timeLeft;
 
-                // UI Dəyişiklikləri
+                // Fazalara uyğun vizual idarəetmə
                 if(currentPhase === 'day_discuss') {
                     document.getElementById('phaseText').innerText = "SÖHBƏT VAXTI";
                     document.getElementById('skipBtn').style.display = 'none';
                     document.getElementById('resultOverlay').style.display = 'none';
-                    setCardsActive(false);
+                    myVote = null; 
                 } 
                 else if(currentPhase === 'day_vote') {
                     document.getElementById('phaseText').innerText = "OYLAMA BAŞLADI!";
                     if(!deadPlayers[safeMe] && !myVote) {
                         document.getElementById('skipBtn').style.display = 'block';
-                        setCardsActive(true);
+                    } else {
+                        document.getElementById('skipBtn').style.display = 'none';
                     }
                 } 
                 else if(currentPhase === 'day_reveal') {
                     document.getElementById('phaseText').innerText = "SƏSLƏR SAYILIR";
                     document.getElementById('skipBtn').style.display = 'none';
-                    setCardsActive(false);
                     closeModal();
                 } 
                 else if(currentPhase === 'day_elimination') {
                     document.getElementById('phaseText').innerText = "ASILMA ANI";
                     document.getElementById('skipBtn').style.display = 'none';
-                    setCardsActive(false);
-                    document.getElementById('resultOverlay').style.display = 'flex';
                 }
 
-                // Vaxt bitdikdə nəsə etmək (Yalnız Host)
+                // Vaxt bitdikdə avtomatik keçidlər (Yalnız Host idarə edir)
                 if(timeLeft <= 0 && isHost) {
                     if(currentPhase === 'day_discuss') {
-                        setPhase('day_vote', 45); // 45 Saniyə Oylama
+                        setPhase('day_vote', 45); 
                     } else if(currentPhase === 'day_vote') {
-                        setPhase('day_reveal', 10); // 10 Saniyə nəticələrə baxış
+                        setPhase('day_reveal', 10); 
                     } else if(currentPhase === 'day_reveal') {
-                        processElimination(); // Kimin öldüyünü hesabla
+                        processElimination(); 
                     } else if(currentPhase === 'day_elimination') {
-                        // Gecəyə keçid
                         db.ref('rooms/' + code + '/gameState').set('night_phase');
                         window.location.href = "gece.html?join=" + code;
                     }
                 }
                 
-                // Qeyri-hostlar üçün keçid
+                // Qeyri-host oyunçular üçün vaxt bitəndə gecəyə keçid
                 if(timeLeft <= 0 && !isHost && currentPhase === 'day_elimination') {
-                    setTimeout(()=>{ window.location.href = "gece.html?join=" + code; }, 2000);
+                    setTimeout(() => { window.location.href = "gece.html?join=" + code; }, 1500);
                 }
 
             }, 1000);
         }
 
-        // Host tərəfindən fazanı və bitmə vaxtını təyin etmək
         function setPhase(phaseName, seconds) {
             db.ref('rooms/' + code).update({
                 gameState: phaseName,
                 phaseEndTime: Date.now() + (seconds * 1000)
-            });
-        }
-
-        function setCardsActive(isActive) {
-            const cards = document.querySelectorAll('.player-card');
-            cards.forEach(c => {
-                if(isActive) c.classList.add('active-vote');
-                else c.classList.remove('active-vote');
             });
         }
 
@@ -314,10 +311,11 @@
             if(selectedTarget) {
                 myVote = selectedTarget;
                 db.ref('rooms/' + code + '/votes/' + safeMe).set(selectedTarget);
-                document.getElementById('card_' + selectedTarget).classList.add('voted-for');
+                const targetCard = document.getElementById('card_' + selectedTarget);
+                if(targetCard) targetCard.classList.add('voted-for');
                 closeModal();
-                setCardsActive(false);
                 document.getElementById('skipBtn').style.display = 'none';
+                buildGrid();
             }
         };
 
@@ -325,29 +323,26 @@
             myVote = "SKIP";
             db.ref('rooms/' + code + '/votes/' + safeMe).set("SKIP");
             closeModal();
-            setCardsActive(false);
             document.getElementById('skipBtn').style.display = 'none';
+            buildGrid();
         };
 
-        // Səslərin Ekranda Görünməsi və Sayların Yazılması
+        // Səslərin Ekranda və Kartlarda Canlı Yenilənməsi
         function listenToVotes() {
             db.ref('rooms/' + code + '/votes').on('value', snap => {
                 const votes = snap.val() || {};
                 
-                // İlk növbədə adların qabağındakı köhnə sayları və nöqtələri təmizləyirik
+                // Adları və nöqtələri sıfırla
                 Object.keys(playersData).forEach(sName => {
                     const nameTextEl = document.getElementById('nameText_' + sName);
-                    if(nameTextEl) {
-                        nameTextEl.innerText = playersData[sName]; // Sadəcə oyunçu adı
-                    }
+                    if(nameTextEl) nameTextEl.innerText = playersData[sName];
                     const dotContainer = document.getElementById('dots_' + sName);
                     if(dotContainer) dotContainer.innerHTML = "";
                 });
                 document.getElementById('skipVoteCount').innerText = "(0)";
 
-                if (currentPhase === 'day_discuss') return; // Söhbət vaxtı oyları gizlət
+                if (currentPhase === 'day_discuss') return; 
                 
-                // Hər kəsin neçə oy aldığını hesablayaq
                 let voteCounts = {};
                 let skipCount = 0;
 
@@ -360,7 +355,7 @@
                     }
                 }
 
-                // Səs saylarını adların qarşısında yazırıq (day_vote və day_reveal fazalarında görünüb yenilənir)
+                // Səs saylarını yaz
                 for(let target in voteCounts) {
                     const nameTextEl = document.getElementById('nameText_' + target);
                     if(nameTextEl && playersData[target]) {
@@ -368,10 +363,9 @@
                     }
                 }
                 
-                // SKIP sayını düymə üzərində yeniləyirik
                 document.getElementById('skipVoteCount').innerText = `(${skipCount})`;
 
-                // Reveal və Elimination fəzalarında həmçinin altlarında nöqtələr də çıxsın
+                // Nöqtələri çıxar (Reveal və ya Elimination-da)
                 if(currentPhase === 'day_reveal' || currentPhase === 'day_elimination') {
                     for(let voter in votes) {
                         const target = votes[voter];
@@ -384,25 +378,21 @@
                     }
                 }
 
-                // AVTOMATİK BİTMƏ BLOKU: Əgər səsvermə fazasındaydıqsa və hər kəs səs veribsə
+                // AVTOMATİK BİTMƏ: Hər kəs səs verdikdə gözləmədən keç
                 if(currentPhase === 'day_vote') {
                     const totalPlayers = Object.keys(playersData);
                     const totalDead = Object.keys(deadPlayers);
-                    
-                    // Diri oyunçuların sayını çıxarırıq
                     const aliveCount = totalPlayers.filter(p => !totalDead.includes(p)).length;
-                    // Verilən ümumi səslərin sayını çıxarırıq
                     const voteCount = Object.keys(votes).length;
 
-                    // Əgər diri olan hər kəs səs veribsə və bunu yoxlayan otağın hostudursa
                     if(voteCount >= aliveCount && aliveCount > 0 && isHost) {
-                        setPhase('day_reveal', 10); // Vaxtı gözləmədən reveal fazasına keçir
+                        setPhase('day_reveal', 10); 
                     }
                 }
             });
         }
 
-        // Asılma Məntiqi (Yalnız Host hesablayır)
+        // Asılma Hesablaması (Yalnız Host tərəfindən icra olunur)
         function processElimination() {
             db.ref('rooms/' + code + '/votes').once('value', snap => {
                 const votes = snap.val() || {};
@@ -412,7 +402,6 @@
                 let isTie = false;
                 let skipVotes = 0;
 
-                // Səsləri say
                 for(let voter in votes) {
                     const target = votes[voter];
                     if(target === "SKIP") {
@@ -430,7 +419,6 @@
                     }
                 }
 
-                // Əgər SKIP səsləri ən çox səs alan oyunçunun səsindən çoxdursa və ya bərabərdirsə, heç kim asılmır
                 if(skipVotes >= maxVotes && skipVotes > 0) {
                     db.ref('rooms/' + code + '/eliminationResult').set("TIE");
                 } else if(isTie || !candidate) {
@@ -439,59 +427,64 @@
                     db.ref('rooms/' + code + '/eliminationResult').set(candidate);
                 }
 
-                setPhase('day_elimination', 10); // 10 saniyə nəticəyə baxış
+                setPhase('day_elimination', 10); 
             });
         }
 
-        // Asılma Ekranını İzlə və Xüsusi Rolları Hesabla
+        // Qara Arxa Fonlu Böyük Nəticə Ekranı Dinləyicisi
         db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
             const result = snap.val();
-            if(!result || currentPhase !== 'day_elimination') return;
+            if(!result || currentPhase !== 'day_elimination') {
+                document.getElementById('resultOverlay').style.display = 'none';
+                return;
+            }
 
-            const rNameEl = document.getElementById('resultName');
-            const rRoleEl = document.getElementById('resultRole');
-            const rNoteEl = document.getElementById('resultNote');
+            const mainTextEl = document.getElementById('resultMainText');
+            const noteEl = document.getElementById('resultNote');
 
             if(result === "TIE") {
-                rNameEl.innerText = "HEÇ KİM ASILMADI";
-                rNameEl.style.color = "#888";
-                rRoleEl.innerText = "Səslər bərabər oldu, SKIP qalib gəldi və ya səs verilmədi.";
-                rNoteEl.innerText = "";
+                mainTextEl.innerHTML = "HEÇ KİM ASILMADI!";
+                mainTextEl.style.color = "#888888";
+                mainTextEl.style.textShadow = "0 0 20px #555";
+                noteEl.innerText = "Səslər bərabər bölündü və ya çoxluq SKIP edildi.";
             } else {
-                const hungName = playersData[result];
-                const realRole = rolesData[result];
+                const hungName = playersData[result] || "Bilinməyən Oyunçu";
+                const realRole = rolesData[result] || "Dinc Sakin";
                 
-                rNameEl.innerText = hungName + " ASILDI!";
-                rNameEl.style.color = "#ff0000";
+                mainTextEl.style.color = "#ff0000";
+                mainTextEl.style.textShadow = "0 0 30px rgba(255, 0, 0, 0.9)";
+
+                // İstədiyiniz xüsusi format: qırmızı böyük hərflərlə ad və rol
+                mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: ${realRole}`;
                 
-                // XÜSUSİ ROL MƏNTİQİ:
+                // Xüsusi rolların daxili işləmə mexanizmləri və qeydləri
                 if(realRole === "Gizli Mafiya") {
-                    rRoleEl.innerText = "Rolu: Dinc Sakin";
-                    rNoteEl.innerText = "Səsvermədə öldüyü üçün əsl rolu gizlədildi.";
-                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Öldü
+                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: Dinc Sakin`;
+                    noteEl.innerText = "O, Gizli Mafiya idi! Öldüyü üçün şəhərə dinc sakin kimi göstərildi.";
+                    if(isHost) db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
                 } 
                 else if(realRole === "Psixopat") {
-                    rRoleEl.innerText = "Rolu: Psixopat";
-                    rNoteEl.innerText = "Lakin o Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
-                    // Ölmədi, deadPlayers-ə əlavə etmirik.
+                    noteEl.innerText = "O, Psixopat idi! İlk asılmadan sağ çıxmağı bacardı və ölmədi!";
                 }
                 else if(realRole === "Canlı Bomba") {
-                    rRoleEl.innerText = "Rolu: Canlı Bomba";
-                    rNoteEl.innerText = "Ona səs verən hər kəs onunla birlikdə partladı!";
-                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
-                    
-                    // Bomba partlayışı effektini tam etmək üçün ona səs verənləri də öldür
-                    db.ref('rooms/' + code + '/votes').once('value', vSnap => {
-                        const vs = vSnap.val() || {};
-                        for(let v in vs) { if(vs[v] === result) db.ref('rooms/' + code + '/deadPlayers/' + v).set(true); }
-                    });
+                    noteEl.innerText = "O, Canlı Bomba idi! Ona səs verən hər kəs partlayışda məhv oldu!";
+                    if(isHost) {
+                        db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
+                        db.ref('rooms/' + code + '/votes').once('value', vSnap => {
+                            const vs = vSnap.val() || {};
+                            for(let v in vs) { 
+                                if(vs[v] === result) db.ref('rooms/' + code + '/deadPlayers/' + v).set(true); 
+                            }
+                        });
+                    }
                 }
                 else {
-                    rRoleEl.innerText = "Rolu: " + realRole;
-                    rNoteEl.innerText = "";
-                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Normal ölüm
+                    noteEl.innerText = "Şəhər əhalisi səsvermə ilə qərarını verdi.";
+                    if(isHost) db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
                 }
             }
+            
+            // Qara ekranı tam göstər
             document.getElementById('resultOverlay').style.display = 'flex';
         });
 
@@ -515,7 +508,6 @@
             input.value = "";
         }
 
-        // Enter ilə mesaj göndərmək
         document.getElementById('chatInput').addEventListener("keypress", function(event) {
             if (event.key === "Enter") { event.preventDefault(); sendMessage(); }
         });
