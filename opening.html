@@ -7,12 +7,20 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        /* Ə hərfinin və digər simvolların düzgün görünməsi üçün sistem şriftləri */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         
         body, html { 
             height: 100%; width: 100%; 
-            background-color: #000; /* Arxa plan qara */
-            color: #ff0000; /* Yazılar qırmızı */
+            background-color: #000; 
+            color: #ff0000; 
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -21,48 +29,53 @@
 
         .role-container {
             text-align: center;
-            opacity: 0; /* Başlanğıcda görünməz */
-            transform: scale(0.9);
+            opacity: 0; 
+            transform: scale(0.92);
             transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
         }
 
         .role-title {
-            font-size: clamp(3rem, 15vw, 6rem);
+            font-size: clamp(2.2rem, 8vw, 5.5rem);
             font-weight: 900;
-            letter-spacing: 15px;
+            letter-spacing: 4px;
             text-transform: uppercase;
-            text-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
-            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
+            margin-bottom: 25px;
+            line-height: 1.2;
         }
 
         .role-note {
-            font-size: clamp(1rem, 5vw, 1.5rem);
-            color: #ffffff; /* Not hissəsi ağ və ya fərqli rəng ola bilər, amma qırmızı istəsən #ff0000 et */
-            letter-spacing: 2px;
-            opacity: 0.8;
-            margin-top: 20px;
+            font-size: clamp(1.1rem, 4vw, 1.6rem);
+            color: #ffffff; 
+            letter-spacing: 1px;
+            line-height: 1.6;
+            background: rgba(255, 0, 0, 0.05);
+            padding: 20px;
+            border-left: 4px solid #ff0000;
+            border-right: 4px solid #ff0000;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
         }
 
-        /* Fade-in effekti üçün klass */
         .fade-in {
             opacity: 1;
             transform: scale(1);
         }
 
-        /* Fade-out effekti üçün klass */
         .fade-out {
             opacity: 0;
-            transition: opacity 1s ease-in-out;
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
 
     <div class="role-container" id="roleBox">
-        <div class="role-title" id="roleName">...</div>
-        <div class="role-note" id="roleNote">
-            SƏNİN QEYDİN BURADA OLACAQ
-        </div>
+        <div class="role-title" id="roleName">ROL YÜKLƏNİR...</div>
+        <div class="role-note" id="roleNote">Təhlükəsizlik protokolları yoxlanılır...</div>
     </div>
 
     <script>
@@ -70,18 +83,78 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 1. ROLLARI BURADA TƏYİN ET (İstədiyin qədər əlavə edə bilərsən)
-        const roles = ["MAFIA", "DETEKTİV", "HƏKİM", "QƏHBƏ", "GÖT", "DON"];
-
-        // 2. HƏR ROL ÜÇÜN XÜSUSİ QEYDLƏR (İstəsən)
+        // Sənəddəki bütün rolların xüsusi notları (Mətnlər olduğu kimi köçürüldü)
         const roleNotes = {
-            "MAFIA": "Gecə hər kəsi səssizcə yox et.",
-            "DETEKTİV": "Şübhəliləri araşdır və mafiyanı tap.",
-            "HƏKİM": "Hər gecə bir nəfəri ölümdən xilas et.",
-            "VƏTƏNDAŞ": "Normal insan.",
-            "MANYAK": "Hamı sənin düşmənindir.",
-            "DON": "Mafiyanın başçısı sənsən."
+            "Sadə Mafiya": "Gecələr Mafiya komandası ilə birlikdə səs verərək 1 nəfəri öldürən əsas silahlı qüvvə. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Don": "Mafiyanın rəhbəri. Xəfiyyələr tərəfindən yoxlanıldıqda həmişə günahsız 'Dinc sakin' olaraq görünür. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Vəkil": "Hər gecə bir mafiya üzvünü seçərək onu həm digər qatillərdən, həm də Keşişin yoxlamalarından qoruyan müdafiəçi. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Aypara": "Ölərsə mafiyaya əlavə atəş haqqı (bir gecədə 2 qətl) qazandıran, özünü şəhərə dinc sakin kimi göstərən fədakar mafiya. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə (özü ölsə belə komandası qazananda) qalib gəlir.",
+            "Xəfiyyə Mafiya": "Gecələr gizlicə oyanıb istədiyi 1 dinc sakinin dəqiq rolunu öyrənən məlumat toplayıcısı. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Hiyləgər Mafiya": "Gecə bir nəfəri seçərək onun xüsusi gücünün hədəfini başqa birinə yönləndirən manipulyator. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Gizli Mafiya": "Oyunda səsvermə və ya qatillər tərəfindən öldürüldükdə rolu şəhərə 'Dinc sakin' kimi elan edilən və xaos yaradan mafiya. Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə (özü ölsə belə komandası qazananda) qalib gəlir.",
+            "Bələdiyyə Sədri": "Gündüz səsverməsində rolunu elan etdikdən sonra səsi həmişə 3 səs olaq hesablanan rəsmi lider. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Jurnalist": "Gecə iki fərqli şəxsi seçib, onların eyni, yoxsa fərqli komandalarda olduğunu öyrənən xəfiyyə. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Keşiş": "Hər gecə 1 nəfəri yoxlayıb onun dəqiq rolunun nə olduğunu öyrənən ruhani lider. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Hakim": "Gündüz səsverməsində hər hansı bir oyunçunu (oyunda yalnız 1 dəfə) edam olunmaqdan xilas edə bilən şəxs. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Türmə rəisi": "Gündüz bir şübhəlini zindana atan, səsvermə hüququnu əlindən alan və gecə onu dindirib istəsə edam edən vəzifəli. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Cismani mühafizəçi": "Gecə bir hədəfi qoruyan, hədəfə hücum olarsa, onun yerinə özünü fəda edərək ölən qoruyucu. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə (özü ölsə belə şəhər qazananda) qalib gəlir.",
+            "Həkim": "Gecələr qatillərin hücumuna məruz qalanları həyata qaytaran və ölümdən xilas edən tibb işçisi. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Detektiv": "Gecə yoxlama apararaq kiminsə rolunu öyrənə bilən və ya istəsə, silahını istifadə edib kimisə vura bilən polis. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Xəbərçi": "Əslində dinc sakin olan, lakin yoxlanıldıqda sistemdə 'Mafiya' kimi görünərək xəfiyyələri çaşdıran şəxs. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Yaddaşsız": "Oyuna heç bir rolu olmadan başlayan, lakin ilk ölən xüsusi rollu şəxsin rolunu mənimsəyib onun yerinə keçən oyunçu. Mənimsədiyi ilk rol hansı komandaya (Şəhər və ya Mafiya) aiddirsə, oyunun sonunda həmin komandanın qələbə şərtini yerinə yetirdikdə qalib gəlir.",
+            "Gözəlçə": "Gecə seçdiyi adamın qabiliyyətindən istifadə etməsinə mane olan, ancaq eyni zamanda onu bütün ölümlərdən də qoruyan rol. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Eros": "İlk gecə iki nəfəri seçib onları bir-birinə aşiq edərək gizli komanda (Aşiqlər) yaradan sevgi tərəfdarı. Oyun boyu gizlicə qoruduğu Aşiqlər cütlüyünü oyunun sonuna qədər sağ saxlaya bildikdə və ya Şəhər komandası ilə birlikdə düşmənləri tamamilə yox etdikdə qalib gəlir.",
+            "Aşiqlər": "Erosun seçdiyi cütlük. Rollarından asılı olmayaraq, biri öldüyü an digəri də kədərdən anında ölür. Oyunun ən son mərhələsinə qədər hər ikisi sağ qalmalı və yerdə qalan bütün digər oyunçuları (Şəhər, Mafiya, Müstəqillər) səsvermə və ya öz gizli rollarının gücü ilə oyundan çıxarıb tək qaldıqda qalib gəlirlər.",
+            "Fenomen": "Gecə öldürüldüyü təqdirdə, onu kimin (hansı rolun) öldürdüyünü bütün şəhərə ifşa edən məşhur. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Gizli Polis": "Passiv roldur. Mafiya onu gecə öldürməyə gələndə, hazırlıqlı olduğu üçün hücum edən mafiyanı vurub öldürür. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Medyum": "Hər gecə ölülərin ruhu ilə əlaqə qurub, keçmiş günlərdə baş verənlərlə bağlı faydalı bir ipucu alan şəxs. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Nəzarətçi": "Gecə bir evə pusqu quran və o evə həmin gecə kimlərin (hansı oyunçuların) gəlib-getdiyini görən müşahidəçi. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Fedai": "Seçdiyi adamı qoruyan, lakin Cismani mühafizəçidən fərqli olaraq özü ölməyən, hücum edəni geri püskürdüb yaralayan qoruyucu. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Qan Qardaşı": "İlk gecə lənətlədiyi iki nəfər səsvermədə bir-birinə səs verdiyi an hər ikisini birdən öldürən cadugər. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Oğru": "Gecə hədəfini həm xüsusi qabiliyyətini istifadə etməkdən, həm də səhəri gün səsvermə hüququndan məhrum edən fırıldaqçı. Oyunun sonuna qədər sağ qalmalı və bütün Mafiyanı, Şəhər komandasını və digər qatilləri tamamilə oyundan çıxararaq oyunda təkbaşına və ya sağ qalan digər Müstəqil rolla qaldıqda qalib gəlir.",
+            "Zəhərləyici": "Qurbanını gizlicə zəhərləyən və dərhal deyil, düz bir gecə sonra ölməsinə səbəb olan müstəqil qatil. Oyunun sonuna qədər sağ qalmalı və həm Mafiyanı, həm də bütün Şəhər sakinlərini zəhərləyərək və ya səsvermədə asaraq tamamilə yox edib təkbaşına sağ qaldıqda qalib gəlir.",
+            "Psixopat": "Çox dözümlü qatildir. Ölməsi (yaxud gündüz asılması) üçün ardıcıl 2 dəfə zərbə alması tələb olunur. Oyunun sonuna qədər özünün 2 can üstünlüyündən istifadə edərək Mafiyanı və Şəhər sakinlərini tək-tək öldürüb, oyunda təkbaşına sağ qalan sonuncu qatil olduqda qalib gəlir.",
+            "Canlı Bomba": "Üzərində partlayıcılar olan sakin. Gecə onu öldürən və ya gündüz onu asan şəxsləri özü ilə bərabər partladıb öldürür. Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə (özünü partladıb düşmən öldürsə belə Şəhər qazananda) qalib gəlir."
         };
+
+        // Sənəddə olan oyunçu sayına görə paylanacaq xüsusi rolların siyahısı
+        const poolByCount = {
+            5: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"],
+            6: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen", "Hakim"],
+            7: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen"],
+            8: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen", "Bələdiyyə Sədri"],
+            9: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen", "Bələdiyyə Sədri", "Jurnalist"],
+            10: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist"],
+            11: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi"],
+            12: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi"],
+            13: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi", "Gözəlçə"],
+            14: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi", "Gözəlçə", "Fenomen"],
+            15: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər"],
+            16: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi"],
+            17: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen"],
+            18: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen", "Nəzarətçi"],
+            19: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen", "Nəzarətçi", "Medyum"],
+            20: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız"],
+            21: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis"],
+            22: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı"],
+            23: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Xəbərçi"],
+            24: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Xəbərçi"],
+            25: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim"],
+            26: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"],
+            27: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"],
+            28: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum"],
+            29: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum"],
+            30: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum", "Xəbərçi"]
+        };
+
+        // Massivi qarışdırmaq üçün funksiya (Fisher-Yates algorithm)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
 
         window.onload = function() {
             const params = new URLSearchParams(window.location.search);
@@ -96,21 +169,43 @@
             const safeMe = me.replace(/[.#$/\[\]]/g, "_");
             const roleRef = db.ref('rooms/' + code + '/assignedRoles/' + safeMe);
 
-            // Host rolları bir dəfə random paylayır (əgər hələ paylanmayıbsa)
+            // Host otaqdakı real adam sayına görə lazımi rolları çəkir və qarışdırıb paylayır
             db.ref('rooms/' + code).once('value', snapshot => {
                 const room = snapshot.val();
+                if (!room) return;
+
                 if (room.host === me) {
-                    const players = Object.keys(room.players);
-                    let updates = {};
-                    players.forEach(pKey => {
-                        const randomRole = roles[Math.floor(Math.random() * roles.length)];
-                        updates[pKey] = randomRole;
+                    db.ref('rooms/' + code + '/assignedRoles').once('value', rSnap => {
+                        // Əgər rollar hələ paylanmayıbsa payla
+                        if (!rSnap.exists()) {
+                            const players = Object.keys(room.players);
+                            const pCount = players.length;
+
+                            // Sənəddə minimum 5, maksimum 30 nəfərlik hovuz var
+                            let selectedPool = [];
+                            if (pCount >= 5 && pCount <= 30) {
+                                selectedPool = [...poolByCount[pCount]];
+                            } else {
+                                // Əgər nəsə səbəbdən 5-dən az olarsa default olaraq 5-lik hovuzdan götürsün
+                                selectedPool = ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"];
+                            }
+
+                            // Rolları qarışdırırıq
+                            const shuffledRoles = shuffle(selectedPool);
+                            
+                            let updates = {};
+                            players.forEach((pKey, index) => {
+                                // Əgər oyunçu sayısı hovuzdan çoxdursa təhlükəsizlik üçün sivil verir
+                                updates[pKey] = shuffledRoles[index] || "Sadə Mafiya";
+                            });
+
+                            db.ref('rooms/' + code + '/assignedRoles').set(updates);
+                        }
                     });
-                    db.ref('rooms/' + code + '/assignedRoles').set(updates);
                 }
             });
 
-            // Öz rolunu dinlə
+            // Hər kəs öz xüsusi rolunu bazadan dinləyir
             roleRef.on('value', s => {
                 const myRole = s.val();
                 if (myRole) {
@@ -126,27 +221,29 @@
 
             nameTxt.innerText = role;
             
-            // Əgər həmin rol üçün xüsusi not varsa onu yaz, yoxdursa standart notu saxla
+            // Əgər sənəddən köçürülən rola aid xüsusi not varsa bura yazılır
             if(roleNotes[role]) {
                 noteTxt.innerText = roleNotes[role];
+            } else {
+                noteTxt.innerText = "Sistem tərəfindən təyin olunan gizli rol.";
             }
 
-            // 1 saniyə sonra Fade-In başlasın
+            // 1 saniyə sonra Fade-In (ekranda təmiz şriftdə görünmə)
             setTimeout(() => {
                 box.classList.add('fade-in');
             }, 500);
 
-            // 5 saniyə göstər, sonra Fade-Out başlasın
+            // 5 saniyə ekranda qalır, sonra Fade-Out ilə bağlanır
             setTimeout(() => {
                 box.classList.remove('fade-in');
                 box.classList.add('fade-out');
             }, 5500);
 
-            // Tamamilə itəndən sonra (məsələn, oyun sahəsinə keçid üçün)
+            // Animasiya tamamilə bitdikdən sonra növbəti mərhələyə keçid hissəsi
             setTimeout(() => {
-                // Bura oyunun əsas səhifəsinin linkini yaza bilərsən
-                // window.location.href = "game.html?join=" + code; 
-                console.log("Rol nümayişi bitdi.");
+                console.log("Rol nümayişi başa çatdı.");
+                // Bura növbəti əsas oyun ekranının linkini bağlaya bilərsən
+                // window.location.href = "game.html?join=" + code;
             }, 7000);
         }
     </script>
