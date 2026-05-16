@@ -2,546 +2,443 @@
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mafia LAB - Gecə Fazası</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GECƏ | TDV-MAFIA</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        body {
-            background-color: #0b0c10;
-            color: #c5c6c7;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        /* Şriftlər və Ümumi Dizayn (oyun.html ilə eyni) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow: hidden; }
+        .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.15); }
+        
+        /* Üst Panel */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0, 100, 255, 0.1); border-bottom: 2px solid #0055ff; height: 60px; }
+        .phase-title { font-size: 1.5rem; font-weight: bold; color: #45f3ff; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px rgba(69, 243, 255, 0.5); }
+        .timer-box { font-size: 1.8rem; font-weight: bold; color: #ffeb3b; text-shadow: 0 0 10px rgba(255, 235, 59, 0.5); }
+        
+        /* Cədvəl Dizaynı (oyun.html ilə eyni 30 nəfərlik grid) */
+        .main-area { display: flex; flex-direction: column; align-items: center; height: calc(100% - 60px); padding: 10px; position: relative; }
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            grid-template-rows: repeat(6, 1fr); 
+            gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; max-height: 80vh;
         }
+        
+        .player-card { 
+            background: rgba(0,0,0,0.8); border: 2px solid #333; border-radius: 8px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 5px; position: relative; transition: 0.2s; text-align: center;
+        }
+        .player-card.active-turn { cursor: pointer; }
+        .player-card.active-turn:hover { border-color: #45f3ff; background: rgba(69, 243, 255, 0.2); }
+        .player-card.selected-target { border-color: #ff0000; box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); background: rgba(255, 0, 0, 0.2); }
+        .player-card.dead { filter: grayscale(100%) opacity(0.5); pointer-events: none; border-color: #111 !important; }
+        
+        .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
+        .p-dead-text { font-size: 0.7rem; color: #ff0000; margin-top: 3px; font-weight: 900; }
 
-        h1 {
-            color: #66fcf1;
-            text-shadow: 0 0 10px #66fcf1;
-            margin-bottom: 5px;
-        }
+        /* Hərəkəti Təsdiqlə Düyməsi */
+        .action-btn { margin-top: 10px; background: #ff0000; color: white; padding: 12px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #aa0000; border-radius: 5px; cursor: pointer; display: none; text-transform: uppercase; box-shadow: 0 0 10px red; }
+        .action-btn:hover { background: #cc0000; }
 
-        #phase-title {
-            color: #45f3ff;
-            font-size: 24px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
+        /* Gözləmə Mətni */
+        #waitingText { margin-top: 15px; font-size: 1.2rem; color: #aaa; display: block; text-align: center; }
 
-        .container {
-            width: 90%;
-            max-width: 1000px;
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
+        /* Ölülər Çatı (Yalnız ölülər üçün açılır) */
+        .chat-toggle-btn { background: #333; color: white; border: 1px solid #555; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; transition: 0.3s; }
+        .chat-toggle-btn.dead-mode { background: #ff0000; border-color: #ff0000; box-shadow: 0 0 10px red; }
+        
+        #chatPanel { 
+            position: fixed; top: 60px; right: -350px; width: 300px; height: calc(100% - 60px); 
+            background: rgba(0,0,0,0.95); border-left: 2px solid #ff0000; transition: right 0.3s ease; 
+            display: flex; flex-direction: column; z-index: 1000; 
         }
-
-        .main-panel {
-            background-color: #1f2833;
-            border: 2px solid #45f3ff;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 0 15px rgba(102, 252, 241, 0.2);
-        }
-
-        .chat-panel {
-            background-color: #1f2833;
-            border: 2px solid #1f2833;
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            height: 500px;
-        }
-
-        .dead-chat-title {
-            color: #ff4d4d;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px #ff4d4d;
-        }
-
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            background-color: #0b0c10;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ff4d4d;
-        }
-
-        .msg {
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .msg-dead {
-            color: #ff9999;
-        }
-
-        .chat-input-area {
-            display: flex;
-            gap: 5px;
-        }
-
-        .chat-input-area input {
-            flex-grow: 1;
-            background-color: #0b0c10;
-            border: 1px solid #ff4d4d;
-            color: #fff;
-            padding: 8px;
-            border-radius: 5px;
-            outline: none;
-        }
-
-        .chat-input-area button {
-            background-color: #ff4d4d;
-            color: #fff;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .status-box {
-            background-color: #0b0c10;
-            border-left: 5px solid #66fcf1;
-            padding: 15px;
-            margin-bottom: 20px;
-            font-size: 18px;
-            border-radius: 0 5px 5px 0;
-        }
-
-        .player-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .player-card {
-            background-color: #0b0c10;
-            border: 1px solid #c5c6c7;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .player-card:hover:not(.dead):not(.disabled) {
-            border-color: #66fcf1;
-            box-shadow: 0 0 10px #66fcf1;
-            background-color: #1f2833;
-        }
-
-        .player-card.dead {
-            border-color: #ff4d4d;
-            background-color: #2a1b1b;
-            color: #ff4d4d;
-            cursor: not-allowed;
-            font-weight: bold;
-        }
-
-        .player-card.selected {
-            border-color: #45f3ff;
-            background-color: #1f2833;
-            box-shadow: 0 0 15px #45f3ff;
-        }
-
-        .action-btn {
-            background-color: #66fcf1;
-            color: #0b0c10;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s;
-            display: none;
-            width: 100%;
-        }
-
-        .action-btn:hover {
-            background-color: #45f3ff;
-        }
-
-        .info-text {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #c5c6c7;
-        }
-
-        .system-log {
-            color: #858585;
-            font-style: italic;
-        }
+        #chatPanel.open { right: 0; }
+        .chat-header { background: #ff0000; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; }
+        #chatMessages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { font-size: 0.9rem; word-break: break-word; color: #ddd; }
+        .msg span { font-weight: bold; color: #ff4d4d; }
+        .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #444; }
+        .chat-input-area input { flex-grow: 1; padding: 8px; background: #222; color: white; border: 1px solid #555; outline: none; }
+        .chat-input-area button { background: #ff0000; color: white; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; }
+        
+        /* Tam Ekran Keçid (Oyun başlayanda / qurtaranda) */
+        #transitionOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; justify-content: center; align-items: center; z-index: 4000; color: white; font-size: 2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 5px; transition: opacity 1s ease; }
     </style>
 </head>
 <body>
+    <div class="bg-container"><div class="bg"></div></div>
 
-    <h1>MAFIA LAB</h1>
-    <div id="phase-title">GECƏ - Növbə: Sadə Mafiya & Don</div>
+    <div id="transitionOverlay">GECƏ ÇÖKÜR...</div>
 
-    <div class="container">
-        <div class="main-panel">
-            <div id="status-container" class="status-box">
-                Hazırda cari rolun hərəkəti gözlənilir...
-            </div>
+    <header>
+        <div class="phase-title" id="phaseText">GECƏ BAŞLAYIR</div>
+        <div class="timer-box" id="timerDisplay">--</div>
+        <button class="chat-toggle-btn" id="chatBtn" onclick="toggleChat()">Çat (Bağlıdır)</button>
+    </header>
 
-            <div id="action-instruction" class="info-text">
-                Zəhmət olmasa, gecə hərəkətini yerinə yetirmək üçün aşağıdakı cədvəldən hədəf seçin.
-            </div>
+    <div class="main-area">
+        <div class="grid-container" id="playerGrid"></div>
+        <div id="waitingText">Hazırda başqaları hərəkət edir, gözləyin...</div>
+        <button class="action-btn" id="actionBtn" onclick="submitAction()">HƏDƏFİ TƏSDİQLƏ</button>
+    </div>
 
-            <div id="player-zone" class="player-grid">
-                </div>
-
-            <button id="submit-action-btn" class="action-btn" onclick="processCurrentTurnAction()">HƏRƏKƏTİ TƏSDİQLƏ</button>
-        </div>
-
-        <div class="chat-panel">
-            <div class="dead-chat-title">ÖLÜLƏRİN GİZLİ ÇATI (GHOST CHAT)</div>
-            <div id="chat-messages">
-                </div>
-            <div class="chat-input-area">
-                <input type="text" id="dead-msg-input" placeholder="Yalnız ölülərin görəcəyi mesaj yazın..." onkeypress="handleChatKeyPress(event)">
-                <button onclick="sendDeadMessage()">Göndər</button>
-            </div>
+    <div id="chatPanel">
+        <div class="chat-header">ÖLÜLƏR ÇATI (GHOST CHAT)</div>
+        <div id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Mesaj yaz..." autocomplete="off">
+            <button onclick="sendDeadMessage()">GÖNDƏR</button>
         </div>
     </div>
 
     <script>
-        // Ssenari sənədindəki dəqiq sıra ilə sıralanmış bütün rollar sxemi
-        const roleSequence = [
-            { id: 1, name: "Sadə Mafiya", type: "mafia_team" },
-            { id: 2, name: "Don", type: "mafia_team" },
-            { id: 3, name: "Vəkil", type: "vəkil" },
-            { id: 4, name: "Aypara", type: "aypara" },
-            { id: 5, name: "Xəfiyyə Mafiya", type: "mafia_team" },
-            { id: 6, name: "Hiyləgər Mafiya", type: "mafia_team" },
-            { id: 7, name: "Psixopat", type: "psixopat" },
-            { id: 8, name: "Zəhərləyici", type: "zəhərləyici" },
-            { id: 9, name: "Canlı Bomba", type: "canlı_bomba" },
-            { id: 10, name: "Oğru", type: "oğru" },
-            { id: 11, name: "Həkim", type: "həkim" },
-            { id: 12, name: "Detektiv", type: "detektiv" },
-            { id: 13, name: "Keşiş", type: "keşiş" },
-            { id: 14, name: "Cismani mühafizəçi", type: "muhafizeci" },
-            { id: 15, name: "Bələdiyyə Sədri", type: "sedr" },
-            { id: 16, name: "Jurnalist", type: "jurnalist" },
-            { id: 17, name: "Türmə rəisi", type: "turme" },
-            { id: 18, name: "Gözəlçə", type: "gozelce" },
-            { id: 19, name: "Eros", type: "eros" },
-            { id: 20, name: "Aşiqlər", type: "asiqler" },
-            { id: 21, name: "Fenomen", type: "fenomen" },
-            { id: 22, name: "Fedai", type: "fedai" },
-            { id: 23, name: "Yaddaşsız", type: "yaddassiz" },
-            { id: 24, name: "Gizli Polis", type: "gizli_polis" },
-            { id: 25, name: "Qan Qardaşı", type: "qan_qardasi" },
-            { id: 26, name: "Hakim", type: "hakim" },
-            { id: 27, name: "Nəzarətçi", type: "nezaretci" }
+        const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('join');
+        const me = localStorage.getItem("mafia_nickname");
+        const safeMe = me ? me.replace(/[.#$/\[\]]/g, "_") : null;
+
+        if(!code || !me) window.location.href = "index.html";
+
+        let isHost = false;
+        let playersData = {};
+        let deadPlayers = {};
+        let rolesData = {};
+        let myRole = "";
+        let amIDead = false;
+        
+        let currentNightRole = "";
+        let selectedTarget = null;
+        let timerInterval = null;
+
+        // Sənəddəki tam dəqiq növbə ardıcıllığı
+        const NIGHT_SEQUENCE = [
+            "Eros", "Qan Qardaşı", "Türmə rəisi", "Oğru", "Gözəlçə", "Hiyləgər Mafiya",
+            "Vəkil", "Həkim", "Cismani mühafizəçi", "Fedai", "Nəzarətçi", "Xəfiyyə Mafiya",
+            "Jurnalist", "Keşiş", "Detektiv", "Medyum", "Zəhərləyici", "Psixopat",
+            "Mafiya Komandası", "Yaddaşsız"
         ];
 
-        // Test məqsədli lokal data (oyun.html səhifəsindən localStorage və ya state vasitəsilə ötürülən məlumatlar)
-        // Real tətbiqdə bu məlumatlar localStorage.getItem("players")-dən oxunacaq.
-        let players = JSON.parse(localStorage.getItem("gameStatePlayers")) || [
-            { id: 1, name: "Huseyn Aga", role: "Don", isAlive: true },
-            { id: 2, name: "Elvin", role: "Sadə Mafiya", isAlive: true },
-            { id: 3, name: "Arif", role: "Həkim", isAlive: true },
-            { id: 4, name: "Aydan", role: "Detektiv", isAlive: true },
-            { id: 5, name: "Ramil", role: "Vəkil", isAlive: false }, // Ölü nümunə
-            { id: 6, name: "Natiq", role: "Keşiş", isAlive: true },
-            { id: 7, name: "Leyla", role: "Psixopat", isAlive: true },
-            { id: 8, name: "Zaur", role: "Cismani mühafizəçi", isAlive: false }, // Ölü nümunə
-            { id: 9, name: "Elnur", role: "Oğru", isAlive: true },
-            { id: 10, name: "Səbinə", role: "Gözəlçə", isAlive: true }
-        ];
+        // Səhifə açılanda dataları çəkirik
+        db.ref('rooms/' + code).once('value', snapshot => {
+            const room = snapshot.val();
+            if(!room) { window.location.href = "index.html"; return; }
 
-        // Hazırda bu kompüterdə/ekranda oturan real oyunçunun obyekti
-        // Məsələn, yoxlamaq üçün özümüzü "Don" edək və ya ölü edib test edə bilərik.
-        let currentPlayer = { id: 1, name: "Huseyn Aga", role: "Don", isAlive: true };
+            isHost = (room.host === me);
+            playersData = room.players || {};
+            deadPlayers = room.deadPlayers || {};
+            rolesData = room.assignedRoles || {};
+            myRole = rolesData[safeMe] || "Dinc Sakin";
+            amIDead = !!deadPlayers[safeMe];
 
-        let currentSequenceIndex = 0; 
-        let selectedPlayerId = null;
-        let nightActionsLog = []; // Gecə baş verən hərəkətlərin yaddaşı (oyun.html-ə ötürmək üçün)
+            setupDeadChat();
 
-        // Səhifə yüklənəndə işə düşən funksiya
-        window.onload = function() {
-            renderPlayerGrid();
-            initDeadChat();
-            runNightCycle();
-        };
+            // Keçid ekranını yavaşca sil
+            setTimeout(() => {
+                const overlay = document.getElementById("transitionOverlay");
+                overlay.style.opacity = "0";
+                setTimeout(() => overlay.style.display = "none", 1000);
+            }, 1500);
 
-        // Oyunçu cədvəlini ekrana çəkmək (oyun.html üslubunda)
-        function renderPlayerGrid() {
-            const playerZone = document.getElementById("player-zone");
-            playerZone.innerHTML = "";
+            // Host ilk gecə addımını başladır (Köhnə hərəkətləri təmizləyir)
+            if(isHost) {
+                db.ref('rooms/' + code + '/nightActions').remove();
+                db.ref('rooms/' + code).update({ nightIndex: 0 });
+                processNightTurn(0);
+            }
 
-            players.forEach(p => {
-                const card = document.createElement("div");
-                card.className = "player-card";
-                
-                if (!p.isAlive) {
-                    card.classList.add("dead");
-                    card.innerHTML = `<div>${p.name}</div><div style='font-size:12px; margin-top:5px;'>[ ÖLÜ ]</div>`;
-                } else {
-                    card.innerHTML = `<div>${p.name}</div>`;
-                    
-                    // Klikləmə hadisəsi
-                    card.onclick = function() {
-                        selectPlayer(p.id, card);
-                    };
+            listenToRoomUpdates();
+            listenToDeadChat();
+        });
+
+        // Otaq dəyişikliklərini canlı izləmə
+        function listenToRoomUpdates() {
+            db.ref('rooms/' + code).on('value', snap => {
+                const room = snap.val();
+                if(!room) return;
+
+                playersData = room.players || {};
+                deadPlayers = room.deadPlayers || {};
+                rolesData = room.assignedRoles || {};
+                amIDead = !!deadPlayers[safeMe];
+
+                // Gecə növbəsinin dəyişməsini izləyirik
+                if(room.currentNightRole && room.currentNightRole !== currentNightRole) {
+                    currentNightRole = room.currentNightRole;
+                    handleTurnChange(room);
                 }
-                card.setAttribute("data-id", p.id);
-                playerZone.appendChild(card);
+
+                // Gündüzə keçid əmri gələrsə avtomatik oyun.html-ə qayıt
+                if(room.gameState === 'day_discuss') {
+                    document.getElementById("transitionOverlay").innerText = "GÜNƏŞ DOĞUR...";
+                    document.getElementById("transitionOverlay").style.display = "flex";
+                    document.getElementById("transitionOverlay").style.opacity = "1";
+                    setTimeout(() => window.location.href = "oyun.html?join=" + code, 2000);
+                }
+
+                buildGrid();
             });
         }
 
-        // Cədvəldən oyunçu seçilməsi məntiqi
-        function selectPlayer(id, cardElement) {
-            // Əgər hazırkı növbədə olan rolun seçim etmək hüququ yoxdursa və ya oyunçu özü ölüdürsə imkan vermə
-            if (!currentPlayer.isAlive) return;
+        // --- HOST ÜÇÜN GECƏ DÖNGÜSÜ MƏNTİQİ ---
+        function processNightTurn(index) {
+            if(!isHost) return;
 
-            const currentRoleObj = roleSequence[currentSequenceIndex];
+            // Bütün rollar bitdisə, Gecəni bağla və Gündüzə keç
+            if(index >= NIGHT_SEQUENCE.length) {
+                calculateNightResults();
+                return;
+            }
+
+            const roleToCheck = NIGHT_SEQUENCE[index];
             
-            // Hazırkı oyunçunun rolu ilə sıradakı rol uyğun gəlmirsə seçimi blokla (izləyici modundadırsa)
-            if (currentPlayer.role !== currentRoleObj.name && !(currentRoleObj.type === "mafia_team" && isMafiaTeam(currentPlayer.role))) {
-                return; 
-            }
-
-            // Əvvəlki seçilmiş kartı təmizlə
-            const previousSelected = document.querySelector(".player-card.selected");
-            if (previousSelected) {
-                previousSelected.classList.remove("selected");
-            }
-
-            selectedPlayerId = id;
-            cardElement.classList.add("selected");
-        }
-
-        // Oyunçunun Mafiya komandasında olub-olmadığını yoxlayan köməkçi funksiya
-        function isMafiaTeam(roleName) {
-            const mafiaRoles = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya"];
-            return mafiaRoles.includes(roleName);
-        }
-
-        // Hər hansı bir rola malik canlı oyunçu varmı deyə yoxlamaq
-        function isRoleAliveAndPresent(roleName) {
-            return players.some(p => p.role === roleName && p.isAlive);
-        }
-
-        // Gecə döngüsünü idarə edən əsas funksiya
-        function runNightCycle() {
-            if (currentSequenceIndex >= roleSequence.length) {
-                // Bütün növbələr bitdi! Yenidən oyun.html səhifəsinə qayıdırıq
-                endNightAndRedirect();
-                return;
-            }
-
-            const currentRole = roleSequence[currentSequenceIndex];
-            const phaseTitleElement = document.getElementById("phase-title");
-            const statusContainer = document.getElementById("status-container");
-            const actionInstruction = document.getElementById("action-instruction");
-            const submitBtn = document.getElementById("submit-action-btn");
-
-            phaseTitleElement.innerText = `GECƏ - Növbə: ${currentRole.name}`;
+            // Həmin rolda olan sağ adam varmı?
+            let isRoleAlive = false;
             
-            // Seçimi sıfırla
-            selectedPlayerId = null;
-            const previousSelected = document.querySelector(".player-card.selected");
-            if (previousSelected) previousSelected.classList.remove("selected");
-
-            // Qayda 1: Əgər bu rola sahib oyunçu oyunda yoxdursa və ya ÖLÜBSƏ, bu sıra heç nə etmədən avtomatik keçir
-            if (!isRoleAliveAndPresent(currentRole.name)) {
-                console.log(`${currentRole.name} ölüb və ya oyunda yoxdur. Sıra keçir.`);
-                currentSequenceIndex++;
-                runNightCycle(); // Növbəti rola keç
-                return;
-            }
-
-            // Qayda 2: Əgər sıra gələn rol hazırkı ekranda oturan oyunçunun özüdürsə (yaxud mafiya komandasındandırsa və sıra mafiyadadırsa)
-            const isMyTurn = (currentPlayer.role === currentRole.name) || 
-                             (currentRole.type === "mafia_team" && isMafiaTeam(currentPlayer.role));
-
-            if (isMyTurn && currentPlayer.isAlive) {
-                // Aktiv hərəkət edən oyunçu ekranı
-                statusContainer.innerHTML = `<strong>Sizin Növbənizdir!</strong> Rolunuz: <span style='color:#45f3ff'>${currentPlayer.role}</span>`;
-                actionInstruction.innerHTML = `Sənəddəki funksiyanıza uyğun olaraq cədvəldən bir oyunçu üzərinə klikləyin və təsdiqləyin.`;
-                submitBtn.style.display = "block";
-            } else {
-                // Digər gözləyən oyunçuların ekranı
-                submitBtn.style.display = "none";
-                
-                if (currentRole.type === "mafia_team") {
-                    statusContainer.innerHTML = `Gecə əməliyyatı aparılır...`;
-                    actionInstruction.innerHTML = `<span style='color:#ff4d4d'>Mafiya və Don</span> hazırda qurban seçir. Digər oyunçular gözləyir...`;
-                } else {
-                    statusContainer.innerHTML = `Gecə əməliyyatı aparılır...`;
-                    actionInstruction.innerHTML = `<span style='color:#66fcf1'>${currentRole.name}</span> hazırda öz işini görür. Zəhmət olmasa gözləyin...`;
-                }
-
-                // Sistem simulyasiyası: Digər oyunçuların hərəkətini avtomatik idarə etmək üçün (Müştəri-Server arxitekturası yoxdursa test üçün 3 saniyə gözləyir)
-                setTimeout(() => {
-                    simulateAIOrExternalPlayerAction(currentRole.name);
-                }, 3000);
-            }
-        }
-
-        // Aktiv oyunçu hərəkəti yerinə yetirib düyməni basdıqda işləyən funksiya
-        function processCurrentTurnAction() {
-            const currentRole = roleSequence[currentSequenceIndex];
-
-            if (selectedPlayerId === null) {
-                alert("Zəhmət olmasa, hərəkət etmək üçün cədvəldən bir oyunçu seçin!");
-                return;
-            }
-
-            const targetPlayer = players.find(p => p.id === selectedPlayerId);
-
-            // Gecə loglarına yazırıq
-            nightActionsLog.push({
-                byRole: currentRole.name,
-                targetId: targetPlayer.id,
-                targetName: targetPlayer.name
-            });
-
-            alert(`Hərəkət uğurla icra olundu: ${currentRole.name} -> Hədəf: ${targetPlayer.name}`);
-
-            // Növbəti rola keçirik
-            currentSequenceIndex++;
-            runNightCycle();
-        }
-
-        // Digər oyunçuların/AI-ın növbəsini simulyasiya edən funksiya
-        function simulateAIOrExternalPlayerAction(roleName) {
-            // Əgər simulyasiya anında artıq növbə dəyişibsə funksiyanı dayandır
-            if (roleSequence[currentSequenceIndex].name !== roleName) return;
-
-            // Canlı oyunçulardan random birini hədəf seç
-            const alivePlayers = players.filter(p => p.isAlive);
-            if (alivePlayers.length > 0) {
-                const randomTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
-                
-                nightActionsLog.push({
-                    byRole: roleName,
-                    targetId: randomTarget.id,
-                    targetName: randomTarget.name
+            if(roleToCheck === "Mafiya Komandası") {
+                // Mafiyadan kimsə sağdırmı?
+                const mafiaRoles = ["Sadə Mafiya", "Don", "Aypara", "Gizli Mafiya", "Xəfiyyə Mafiya", "Hiyləgər Mafiya"];
+                Object.keys(rolesData).forEach(p => {
+                    if(mafiaRoles.includes(rolesData[p]) && !deadPlayers[p]) isRoleAlive = true;
                 });
-                
-                console.log(`Sistem tərəfindən icra olundu: ${roleName} -> Hədəf: ${randomTarget.name}`);
+            } else {
+                // Xüsusi roldan sağ adam varmı?
+                Object.keys(rolesData).forEach(p => {
+                    if(rolesData[p] === roleToCheck && !deadPlayers[p]) isRoleAlive = true;
+                });
             }
 
-            currentSequenceIndex++;
-            runNightCycle();
+            // Əgər o roldan adam yoxdursa və ya ölübsə, heç gözləmədən avtomatik sıranı atla!
+            if(!isRoleAlive) {
+                db.ref('rooms/' + code).update({ nightIndex: index + 1 });
+                processNightTurn(index + 1);
+                return;
+            }
+
+            // Əgər sağ adam varsa, taymeri başlat və növbəni ona ver
+            db.ref('rooms/' + code).update({
+                currentNightRole: roleToCheck,
+                phaseEndTime: Date.now() + 15000, // Hərəkət etmək üçün 15 saniyə vaxt
+                nightIndex: index
+            });
         }
 
-        // Gecə bitəndə bütün datanı yadda saxlayıb oyun.html səhifəsinə yönləndirən funksiya
-        function endNightAndRedirect() {
-            alert("Gecə bitdi! Bütün rollar öz işini tamamladı. Günəş doğur...");
-            
-            // Gecə baş verən ölümləri və hadisələri hesablamaq üçün logu ötürürük
-            // Məsələn: Mafiya kimi seçibsə o adamın vəziyyətini real tətbiqdə burda dəyişirik:
-            const mafiaAction = nightActionsLog.find(a => a.byRole === "Sadə Mafiya" || a.byRole === "Don");
-            const doctorAction = nightActionsLog.find(a => a.byRole === "Həkim");
+        // --- OYUNÇU EKRANININ NÖVBƏYƏ GÖRƏ DƏYİŞMƏSİ ---
+        function handleTurnChange(room) {
+            clearInterval(timerInterval);
+            selectedTarget = null;
+            const endTime = room.phaseEndTime || 0;
 
-            if (mafiaAction) {
-                // Əgər həkim eyni adamı müalicə etməyibsə, həmin adam ölüb
-                if (doctorAction && doctorAction.targetId === mafiaAction.targetId) {
-                    // Həkim xilas etdi, heç kim ölmədi
-                    localStorage.setItem("lastNightDeath", "none");
+            const isMyTurn = checkIsMyTurn(currentNightRole);
+
+            if(isMyTurn && !amIDead) {
+                document.getElementById('phaseText').innerText = `SƏNİN NÖVBƏNDİR! HƏDƏF SEÇ`;
+                document.getElementById('phaseText').style.color = "#ff0000";
+                document.getElementById('waitingText').style.display = "none";
+                document.getElementById('actionBtn').style.display = "block";
+            } else {
+                document.getElementById('phaseText').innerText = `SIRA: ${currentNightRole.toUpperCase()}`;
+                document.getElementById('phaseText').style.color = "#45f3ff";
+                document.getElementById('waitingText').style.display = "block";
+                document.getElementById('actionBtn').style.display = "none";
+            }
+
+            // Taymerin işləməsi
+            timerInterval = setInterval(() => {
+                let timeLeft = Math.ceil((endTime - Date.now()) / 1000);
+                if(timeLeft < 0) timeLeft = 0;
+                document.getElementById('timerDisplay').innerText = timeLeft;
+
+                // Vaxt bitəndə Host avtomatik növbəti rola keçirir
+                if(timeLeft <= 0 && isHost) {
+                    clearInterval(timerInterval);
+                    const nextIndex = (room.nightIndex || 0) + 1;
+                    processNightTurn(nextIndex);
+                }
+            }, 1000);
+        }
+
+        // Mənim növbəm olub olmadığını yoxlayır
+        function checkIsMyTurn(turnRole) {
+            if(turnRole === "Mafiya Komandası") {
+                const mafiaRoles = ["Sadə Mafiya", "Don", "Aypara", "Gizli Mafiya", "Xəfiyyə Mafiya", "Hiyləgər Mafiya"];
+                return mafiaRoles.includes(myRole);
+            }
+            return turnRole === myRole;
+        }
+
+        // --- CƏDVƏLİN QURULMASI (oyun.html kimidir) ---
+        function buildGrid() {
+            const grid = document.getElementById('playerGrid');
+            grid.innerHTML = "";
+            const pKeys = Object.keys(playersData);
+
+            const isMyTurn = checkIsMyTurn(currentNightRole);
+
+            for(let i=0; i<30; i++) {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+
+                if(i < pKeys.length) {
+                    const sName = pKeys[i];
+                    const pName = playersData[sName];
+                    card.id = "card_" + sName;
+
+                    if(deadPlayers[sName]) {
+                        card.classList.add('dead');
+                        card.innerHTML = `<div class="p-name">${pName}</div><div class="p-dead-text">[ ÖLÜ ]</div>`;
+                    } else {
+                        card.innerHTML = `<div class="p-name">${pName}</div>`;
+                        
+                        // Yalnız mənim növbəmdirsə və mən sağamsa kartlara klikləyə bilərəm
+                        if(isMyTurn && !amIDead && sName !== safeMe) {
+                            card.classList.add('active-turn');
+                            card.onclick = () => selectTarget(sName);
+                        }
+                    }
+
+                    if(selectedTarget === sName) {
+                        card.classList.add('selected-target');
+                    }
                 } else {
-                    // Mafiyanın vurduğu adam öldü
-                    const killedPlayer = players.find(p => p.id === mafiaAction.targetId);
-                    if (killedPlayer) {
-                        killedPlayer.isAlive = false;
-                        localStorage.setItem("lastNightDeath", killedPlayer.name);
+                    card.style.visibility = "hidden";
+                }
+                grid.appendChild(card);
+            }
+        }
+
+        // Hədəf Seçimi
+        function selectTarget(targetSafeName) {
+            selectedTarget = targetSafeName;
+            buildGrid(); // Təkrar rəngləmək üçün grid-i yeniləyirik
+        }
+
+        // Təsdiqlə Düyməsi
+        function submitAction() {
+            if(!selectedTarget) {
+                alert("Hərəkət etmək üçün cədvəldən bir nəfər seçməlisiniz!");
+                return;
+            }
+
+            // Hərəkəti bazaya yazırıq (Host sonda bunları oxuyacaq)
+            db.ref('rooms/' + code + '/nightActions/' + safeMe).set({
+                role: myRole,
+                turnGroup: currentNightRole,
+                target: selectedTarget
+            });
+
+            document.getElementById('actionBtn').style.display = "none";
+            document.getElementById('waitingText').style.display = "block";
+            document.getElementById('waitingText').innerText = "Hərəkət qeydə alındı, digərlərini gözləyin...";
+        }
+
+        // --- GECƏNİN NƏTİCƏLƏRİ VƏ GÜNDÜZƏ KEÇİD (Yalnız Host) ---
+        function calculateNightResults() {
+            db.ref('rooms/' + code + '/nightActions').once('value', snap => {
+                const actions = snap.val() || {};
+                let mafiaTargetCounts = {};
+                let finalMafiaTarget = null;
+                let maxVotes = 0;
+
+                let doctorTarget = null;
+                let psixopatTarget = null;
+
+                // Hərəkətləri oxuyub analiz edirik
+                for(let player in actions) {
+                    const act = actions[player];
+                    if(act.turnGroup === "Mafiya Komandası") {
+                        mafiaTargetCounts[act.target] = (mafiaTargetCounts[act.target] || 0) + 1;
+                        if(mafiaTargetCounts[act.target] > maxVotes) {
+                            maxVotes = mafiaTargetCounts[act.target];
+                            finalMafiaTarget = act.target;
+                        }
+                    }
+                    if(act.role === "Həkim") {
+                        doctorTarget = act.target;
+                    }
+                    if(act.role === "Psixopat") {
+                        psixopatTarget = act.target;
                     }
                 }
-            }
 
-            // Yenilənmiş oyunçu siyahısını və logları localyaddaşa yazırıq ki oyun.html oxuya bilsin
-            localStorage.setItem("gameStatePlayers", JSON.stringify(players));
-            localStorage.setItem("nightActionsLog", JSON.stringify(nightActionsLog));
+                // Ölüm qərarlarını tətbiq edirik
+                let newDead = {};
 
-            // oyun.html səhifəsinə geri qayıdış (Döngü təmin olunur)
-            window.location.href = "oyun.html";
-        }
+                // Mafiya kimi vurdu? (Həkim qorumadısa ölür)
+                if(finalMafiaTarget && finalMafiaTarget !== doctorTarget) {
+                    newDead[finalMafiaTarget] = true;
+                }
+                
+                // Psixopat kimi vurdu? (Həkim onu da qorumadısa ölür)
+                if(psixopatTarget && psixopatTarget !== doctorTarget) {
+                    newDead[psixopatTarget] = true;
+                }
 
-        // --- AMONG US TIPLI ÖLÜLƏR ÇATI MEXANİZMİ ---
-        
-        function initDeadChat() {
-            const chatMessages = document.getElementById("chat-messages");
-            
-            // Əgər oyunçu sağdırsa, Among Us-dakı kimi ölü çatını görməməlidir
-            if (currentPlayer.isAlive) {
-                chatMessages.innerHTML = `<div class='system-log' style='color:#ff4d4d; text-align:center;'>Siz SAĞSINIZ. Ölülərin ruhlarının çışmalarını eşidə bilməzsiniz!</div>`;
-                document.getElementById("dead-msg-input").disabled = true;
-                document.getElementById("dead-msg-input").placeholder = "Yalnız ölülər bura yaza bilər...";
-            } else {
-                chatMessages.innerHTML = `<div class='system-log' style='color:#00ff00; text-align:center;'>Siz ÖLDÜNÜZ. Ghost Chat aktivdir. Digər ölülərlə danışın!</div>`;
-            }
+                // Bazada ölənləri yeniləyirik
+                let updates = {};
+                for(let d in newDead) {
+                    updates['rooms/' + code + '/deadPlayers/' + d] = true;
+                }
 
-            // Əvvəllər yazılmış ölü mesajlarını localStoragedan yükləyək
-            loadDeadMessages();
-        }
-
-        function loadDeadMessages() {
-            // Əgər canlıdırsa mesajların məzmununu yükləmə və göstərmə
-            if (currentPlayer.isAlive) return;
-
-            const savedMsgs = JSON.parse(localStorage.getItem("ghostChatMessages")) || [];
-            const chatMessages = document.getElementById("chat-messages");
-            
-            // Başlanğıc bildirişindən sonrakıları təmizlə və yenidən yaz
-            chatMessages.innerHTML = `<div class='system-log' style='color:#00ff00; text-align:center;'>Siz ÖLDÜNÜZ. Ghost Chat aktivdir.</div>`;
-            
-            savedMsgs.forEach(m => {
-                const msgDiv = document.createElement("div");
-                msgDiv.className = "msg msg-dead";
-                msgDiv.innerHTML = `<strong>[Ruh] ${m.sender}:</strong> ${m.text}`;
-                chatMessages.appendChild(msgDiv);
+                // Və oyunu avtomatik Gündüz müzakirəsinə keçiririk
+                updates['rooms/' + code + '/gameState'] = 'day_discuss';
+                updates['rooms/' + code + '/phaseEndTime'] = Date.now() + 30000; // 30 saniyə müzakirə
+                
+                db.ref().update(updates);
             });
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- AMONG US TİPLİ ÖLÜLƏR ÇATI ---
+        function setupDeadChat() {
+            const chatBtn = document.getElementById('chatBtn');
+            if(amIDead) {
+                chatBtn.innerText = "ÖLÜLƏR ÇATI";
+                chatBtn.classList.add('dead-mode');
+            } else {
+                chatBtn.innerText = "ÇAT (BAĞLIDIR)";
+                chatBtn.onclick = () => alert("Siz sağsınız. Çat ancaq ölülər üçündür!");
+            }
+        }
+
+        function toggleChat() {
+            if(!amIDead) return;
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
         }
 
         function sendDeadMessage() {
-            // Əgər oyunçu sağdırsa mesaj göndərə bilməz
-            if (currentPlayer.isAlive) {
-                alert("Canlı oyunçular ölülər çatına mesaj göndərə bilməz!");
-                return;
-            }
+            if(!amIDead) return;
+            const input = document.getElementById('chatInput');
+            const txt = input.value.trim();
+            if(!txt) return;
 
-            const inputElement = document.getElementById("dead-msg-input");
-            const text = inputElement.value.trim();
-            
-            if (text === "") return;
-
-            const savedMsgs = JSON.parse(localStorage.getItem("ghostChatMessages")) || [];
-            
-            const newMsg = {
-                sender: currentPlayer.name,
-                text: text,
-                time: new Date().toLocaleTimeString()
-            };
-
-            savedMsgs.push(newMsg);
-            localStorage.setItem("ghostChatMessages", JSON.stringify(savedMsgs));
-
-            inputElement.value = "";
-            loadDeadMessages(); // Çatı yenilə
+            db.ref('rooms/' + code + '/deadChat').push({
+                sender: me,
+                msg: txt,
+                time: Date.now()
+            });
+            input.value = "";
         }
 
-        function handleChatKeyPress(event) {
-            if (event.key === "Enter") {
-                sendDeadMessage();
-            }
+        document.getElementById('chatInput').addEventListener("keypress", function(e) {
+            if(e.key === "Enter") { e.preventDefault(); sendDeadMessage(); }
+        });
+
+        function listenToDeadChat() {
+            db.ref('rooms/' + code + '/deadChat').on('child_added', snap => {
+                const data = snap.val();
+                const box = document.getElementById('chatMessages');
+                box.innerHTML += `<div class="msg"><span>[Ruh] ${data.sender}:</span> ${data.msg}</div>`;
+                box.scrollTop = box.scrollHeight;
+            });
         }
     </script>
 </body>
