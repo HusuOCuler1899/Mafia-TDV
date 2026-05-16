@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GÜNDÜZ | TDV-MAFIA</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        /* Şriftlərin düzgün işləməsi üçün sistem şriftləri */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow: hidden; }
+        .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.2); }
+        
+        /* Üst Panel */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(255,0,0,0.1); border-bottom: 2px solid #ff0000; height: 60px; }
+        .phase-title { font-size: 1.5rem; font-weight: bold; color: #ff0000; text-transform: uppercase; letter-spacing: 2px; }
+        .timer-box { font-size: 1.8rem; font-weight: bold; color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+        .chat-toggle-btn { background: #ff0000; color: white; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
+        
+        /* Əsas Cədvəl (5 Sütun, 6 Sətir = 30 Nəfər) */
+        .main-area { display: flex; flex-direction: column; align-items: center; height: calc(100% - 60px); padding: 10px; position: relative; }
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            grid-template-rows: repeat(6, 1fr); 
+            gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; max-height: 80vh;
+        }
+        
+        /* Oyunçu Qutusu (Among Us Tərzi) */
+        .player-card { 
+            background: rgba(0,0,0,0.7); border: 2px solid #444; border-radius: 8px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 5px; cursor: pointer; position: relative; transition: 0.2s; text-align: center;
+        }
+        .player-card.active-vote:hover { border-color: #ff0000; background: rgba(255,0,0,0.2); }
+        .player-card.dead { filter: grayscale(100%) opacity(0.5); pointer-events: none; }
+        .player-card.voted-for { border-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); }
+        
+        .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
+        
+        /* Səs İkonları (Kim kimə səs verib) */
+        .vote-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 5px; min-height: 12px; width: 100%; }
+        .vote-dot { width: 12px; height: 12px; background: #ff0000; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 5px #000; }
+
+        /* Skip Düyməsi */
+        .skip-btn { margin-top: 10px; background: #555; color: white; padding: 12px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #888; border-radius: 5px; cursor: pointer; display: none; }
+        .skip-btn:hover { background: #777; }
+
+        /* Çat Sistemi (Sürüşərək açılan) */
+        #chatPanel { 
+            position: fixed; top: 60px; right: -350px; width: 300px; height: calc(100% - 60px); 
+            background: rgba(0,0,0,0.95); border-left: 2px solid #ff0000; transition: right 0.3s ease; 
+            display: flex; flex-direction: column; z-index: 1000; 
+        }
+        #chatPanel.open { right: 0; }
+        #chatMessages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { font-size: 0.9rem; word-break: break-word; }
+        .msg span { font-weight: bold; color: #ff0000; }
+        .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #444; }
+        .chat-input-area input { flex-grow: 1; padding: 8px; background: #222; color: white; border: 1px solid #555; outline: none; }
+        .chat-input-area button { background: #ff0000; color: white; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; }
+
+        /* Təsdiq Modalı (Əminsən?) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-box { background: #111; border: 2px solid #ff0000; padding: 30px; text-align: center; border-radius: 10px; max-width: 400px; width: 90%; }
+        .modal-title { font-size: 1.5rem; color: white; margin-bottom: 20px; }
+        .modal-btns { display: flex; justify-content: center; gap: 15px; }
+        .modal-btns button { padding: 12px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-yes { background: #ff0000; color: white; }
+        .btn-no { background: #555; color: white; }
+
+        /* Nəticə və Asılma Ekranı (Tam Ekran Overlay) */
+        #resultOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; text-align: center; padding: 20px; }
+        #resultName { font-size: clamp(2.5rem, 8vw, 5rem); color: #ff0000; font-weight: 900; letter-spacing: 5px; margin-bottom: 15px; text-shadow: 0 0 20px #ff0000; text-transform: uppercase; }
+        #resultRole { font-size: 1.5rem; color: #fff; margin-bottom: 10px; }
+        #resultNote { font-size: 1.2rem; color: #aaa; max-width: 600px; }
+
+    </style>
+</head>
+<body>
+    <div class="bg-container"><div class="bg"></div></div>
+
+    <header>
+        <div class="phase-title" id="phaseText">SÖHBƏT VAXTI</div>
+        <div class="timer-box" id="timerDisplay">30</div>
+        <button class="chat-toggle-btn" onclick="toggleChat()">Çat <span id="chatNotif" style="display:none;color:#ffeb3b;">(!)</span></button>
+    </header>
+
+    <div class="main-area">
+        <div class="grid-container" id="playerGrid">
+            </div>
+        <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP)</button>
+    </div>
+
+    <div id="chatPanel">
+        <div id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Mesaj yaz..." autocomplete="off">
+            <button onclick="sendMessage()">GÖNDƏR</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="voteModal">
+        <div class="modal-box">
+            <div class="modal-title" id="voteModalTitle">Əminsən?</div>
+            <div class="modal-btns">
+                <button class="btn-yes" id="confirmVoteBtn">BƏLİ, ASILSIN!</button>
+                <button class="btn-no" onclick="closeModal()">LƏĞV ET</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultOverlay">
+        <div id="resultName">HESABLANIR...</div>
+        <div id="resultRole"></div>
+        <div id="resultNote"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('join');
+        const me = localStorage.getItem("mafia_nickname");
+        const safeMe = me ? me.replace(/[.#$/\[\]]/g, "_") : null;
+
+        if(!code || !me) window.location.href = "index.html";
+
+        let isHost = false;
+        let currentPhase = "";
+        let playersData = {};
+        let deadPlayers = {};
+        let myVote = null;
+        let selectedTarget = null;
+        let rolesData = {};
+
+        // Səhifə yüklənəndə dataları çək
+        db.ref('rooms/' + code).once('value', snapshot => {
+            const room = snapshot.val();
+            if(!room) { window.location.href = "index.html"; return; }
+            
+            isHost = (room.host === me);
+            playersData = room.players || {};
+            rolesData = room.assignedRoles || {};
+            deadPlayers = room.deadPlayers || {};
+
+            buildGrid();
+
+            // Söhbət fazasını başlat (Yalnız host idarə edir ki sinxron olsun)
+            if(isHost && room.gameState !== 'day_discuss') {
+                setPhase('day_discuss', 30);
+                db.ref('rooms/' + code + '/votes').remove(); // Əvvəlki oyları sil
+            }
+
+            listenToGameState();
+            listenToVotes();
+            listenToChat();
+        });
+
+        // 30 Nəfərlik Cədvəlin Yaradılması
+        function buildGrid() {
+            const grid = document.getElementById('playerGrid');
+            grid.innerHTML = "";
+            const pKeys = Object.keys(playersData);
+            
+            // 30 xana mütləq yaradılır, boş qalanlar transparan olur
+            for(let i=0; i<30; i++) {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                
+                if(i < pKeys.length) {
+                    const sName = pKeys[i];
+                    const pName = playersData[sName];
+                    card.id = "card_" + sName;
+                    
+                    if(deadPlayers[sName]) card.classList.add('dead');
+
+                    card.innerHTML = `
+                        <div class="p-name">${pName}</div>
+                        <div class="vote-dots" id="dots_${sName}"></div>
+                    `;
+
+                    // Klikləmə hadisəsi (Yalnız oylama vaxtı və diri adamlara)
+                    card.onclick = () => {
+                        if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
+                            openModal(sName, pName);
+                        }
+                    };
+                } else {
+                    card.style.visibility = "hidden"; // Boş xanalar
+                }
+                grid.appendChild(card);
+            }
+        }
+
+        // Faza Vəziyyətini İzləmək
+        function listenToGameState() {
+            db.ref('rooms/' + code).on('value', snap => {
+                const room = snap.val();
+                if(!room) return;
+                
+                deadPlayers = room.deadPlayers || {};
+                
+                // Ölü adamların üstündən xətt çək / qaralt
+                Object.keys(deadPlayers).forEach(sName => {
+                    const card = document.getElementById("card_" + sName);
+                    if(card) card.classList.add('dead');
+                });
+
+                if(room.gameState !== currentPhase || room.phaseEndTime) {
+                    currentPhase = room.gameState;
+                    handlePhaseChange(room);
+                }
+            });
+        }
+
+        let timerInterval = null;
+
+        function handlePhaseChange(room) {
+            clearInterval(timerInterval);
+            const endTime = room.phaseEndTime || 0;
+            
+            timerInterval = setInterval(() => {
+                let timeLeft = Math.ceil((endTime - Date.now()) / 1000);
+                if(timeLeft < 0) timeLeft = 0;
+                
+                document.getElementById('timerDisplay').innerText = timeLeft;
+
+                // UI Dəyişiklikləri
+                if(currentPhase === 'day_discuss') {
+                    document.getElementById('phaseText').innerText = "SÖHBƏT VAXTI";
+                    document.getElementById('skipBtn').style.display = 'none';
+                    setCardsActive(false);
+                } 
+                else if(currentPhase === 'day_vote') {
+                    document.getElementById('phaseText').innerText = "OYLAMA BAŞLADI!";
+                    if(!deadPlayers[safeMe] && !myVote) {
+                        document.getElementById('skipBtn').style.display = 'block';
+                        setCardsActive(true);
+                    }
+                } 
+                else if(currentPhase === 'day_reveal') {
+                    document.getElementById('phaseText').innerText = "SƏSLƏR SAYILIR";
+                    document.getElementById('skipBtn').style.display = 'none';
+                    setCardsActive(false);
+                    closeModal();
+                } 
+                else if(currentPhase === 'day_elimination') {
+                    document.getElementById('resultOverlay').style.display = 'flex';
+                }
+
+                // Vaxt bitdikdə nəsə etmək (Yalnız Host)
+                if(timeLeft <= 0 && isHost) {
+                    if(currentPhase === 'day_discuss') {
+                        setPhase('day_vote', 45); // 45 Saniyə Oylama
+                    } else if(currentPhase === 'day_vote') {
+                        setPhase('day_reveal', 10); // 10 Saniyə nəticələrə baxış
+                    } else if(currentPhase === 'day_reveal') {
+                        processElimination(); // Kimin öldüyünü hesabla
+                    } else if(currentPhase === 'day_elimination') {
+                        // Gecəyə keçid
+                        db.ref('rooms/' + code + '/gameState').set('night_phase');
+                        window.location.href = "gece.html?join=" + code;
+                    }
+                }
+                
+                // Qeyri-hostlar üçün keçid
+                if(timeLeft <= 0 && !isHost && currentPhase === 'day_elimination') {
+                    setTimeout(()=>{ window.location.href = "gece.html?join=" + code; }, 2000);
+                }
+
+            }, 1000);
+        }
+
+        // Host tərəfindən fazanı və bitmə vaxtını təyin etmək
+        function setPhase(phaseName, seconds) {
+            db.ref('rooms/' + code).update({
+                gameState: phaseName,
+                phaseEndTime: Date.now() + (seconds * 1000)
+            });
+        }
+
+        function setCardsActive(isActive) {
+            const cards = document.querySelectorAll('.player-card');
+            cards.forEach(c => {
+                if(isActive) c.classList.add('active-vote');
+                else c.classList.remove('active-vote');
+            });
+        }
+
+        // Oylama Modalı
+        function openModal(targetSafeName, targetName) {
+            selectedTarget = targetSafeName;
+            document.getElementById('voteModalTitle').innerText = `Əminsən ki, ${targetName} üçün səs verəsən?`;
+            document.getElementById('voteModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('voteModal').style.display = 'none';
+            selectedTarget = null;
+        }
+
+        document.getElementById('confirmVoteBtn').onclick = () => {
+            if(selectedTarget) {
+                myVote = selectedTarget;
+                db.ref('rooms/' + code + '/votes/' + safeMe).set(selectedTarget);
+                document.getElementById('card_' + selectedTarget).classList.add('voted-for');
+                closeModal();
+                setCardsActive(false);
+                document.getElementById('skipBtn').style.display = 'none';
+            }
+        };
+
+        document.getElementById('skipBtn').onclick = () => {
+            myVote = "SKIP";
+            db.ref('rooms/' + code + '/votes/' + safeMe).set("SKIP");
+            closeModal();
+            setCardsActive(false);
+            document.getElementById('skipBtn').style.display = 'none';
+        };
+
+        // Səslərin Ekranda Görünməsi
+        function listenToVotes() {
+            db.ref('rooms/' + code + '/votes').on('value', snap => {
+                if(currentPhase === 'day_discuss') return; // Söhbət vaxtı oyları gizlət
+                
+                const votes = snap.val() || {};
+                // Nöqtələri təmizlə
+                document.querySelectorAll('.vote-dots').forEach(el => el.innerHTML = "");
+
+                // Oylama vaxtı yalnız kimin səs verdiyi bilinsin deyə gizli tutula bilər, 
+                // amma Among Usda səs verənin profilində işarə çıxır. 
+                // Reveal fazasında isə asılacaq adamın altında nöqtələr çıxır.
+                
+                if(currentPhase === 'day_reveal' || currentPhase === 'day_elimination') {
+                    for(let voter in votes) {
+                        const target = votes[voter];
+                        if(target !== "SKIP") {
+                            const dotContainer = document.getElementById('dots_' + target);
+                            if(dotContainer) {
+                                dotContainer.innerHTML += '<div class="vote-dot"></div>';
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Asılma Məntiqi (Yalnız Host hesablayır)
+        function processElimination() {
+            db.ref('rooms/' + code + '/votes').once('value', snap => {
+                const votes = snap.val() || {};
+                let counts = {};
+                let maxVotes = 0;
+                let candidate = null;
+                let isTie = false;
+
+                // Səsləri say
+                for(let voter in votes) {
+                    const target = votes[voter];
+                    if(target === "SKIP") continue;
+                    counts[target] = (counts[target] || 0) + 1;
+                    
+                    if(counts[target] > maxVotes) {
+                        maxVotes = counts[target];
+                        candidate = target;
+                        isTie = false;
+                    } else if(counts[target] === maxVotes) {
+                        isTie = true;
+                    }
+                }
+
+                if(isTie || !candidate) {
+                    db.ref('rooms/' + code + '/eliminationResult').set("TIE");
+                } else {
+                    db.ref('rooms/' + code + '/eliminationResult').set(candidate);
+                }
+
+                setPhase('day_elimination', 10); // 10 saniyə nəticəyə baxış
+            });
+        }
+
+        // Asılma Ekranını İzlə və Xüsusi Rolları Hesabla
+        db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
+            const result = snap.val();
+            if(!result || currentPhase !== 'day_elimination') return;
+
+            const rNameEl = document.getElementById('resultName');
+            const rRoleEl = document.getElementById('resultRole');
+            const rNoteEl = document.getElementById('resultNote');
+
+            if(result === "TIE") {
+                rNameEl.innerText = "HEÇ KİM ASILMADI";
+                rNameEl.style.color = "#888";
+                rRoleEl.innerText = "Səslər bərabər oldu və ya səs verilmədi.";
+                rNoteEl.innerText = "";
+            } else {
+                const hungName = playersData[result];
+                const realRole = rolesData[result];
+                
+                rNameEl.innerText = hungName + " ASILDI!";
+                
+                // XÜSUSİ ROL MƏNTİQİ:
+                if(realRole === "Gizli Mafiya") {
+                    rRoleEl.innerText = "Rolu: Dinc Sakin";
+                    rNoteEl.innerText = "Səsvermədə öldüyü üçün əsl rolu gizlədildi.";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Öldü
+                } 
+                else if(realRole === "Psixopat") {
+                    rRoleEl.innerText = "Rolu: Psixopat";
+                    rNoteEl.innerText = "Lakin o Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
+                    // Ölmədi, deadPlayers-ə əlavə etmirik. (1 canı getdi məntiqi mürəkkəbdir deyə sağ buraxırıq)
+                }
+                else if(realRole === "Canlı Bomba") {
+                    rRoleEl.innerText = "Rolu: Canlı Bomba";
+                    rNoteEl.innerText = "Ona səs verən hər kəs onunla birlikdə partladı!";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
+                    // Bomba partlayışı effektini tam etmək üçün ona səs verənləri də öldür
+                    db.ref('rooms/' + code + '/votes').once('value', vSnap => {
+                        const vs = vSnap.val() || {};
+                        for(let v in vs) { if(vs[v] === result) db.ref('rooms/' + code + '/deadPlayers/' + v).set(true); }
+                    });
+                }
+                else {
+                    rRoleEl.innerText = "Rolu: " + realRole;
+                    rNoteEl.innerText = "";
+                    db.ref('rooms/' + code + '/deadPlayers/' + result).set(true); // Normal ölüm
+                }
+            }
+            document.getElementById('resultOverlay').style.display = 'flex';
+        });
+
+        // ÇAT SİSTEMİ
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const txt = input.value.trim();
+            if(!txt) return;
+            
+            db.ref('rooms/' + code + '/chat').push({
+                sender: me,
+                msg: txt,
+                time: Date.now()
+            });
+            input.value = "";
+        }
+
+        // Enter ilə mesaj göndərmək
+        document.getElementById('chatInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") { event.preventDefault(); sendMessage(); }
+        });
+
+        function listenToChat() {
+            db.ref('rooms/' + code + '/chat').on('child_added', snap => {
+                const data = snap.val();
+                const box = document.getElementById('chatMessages');
+                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
+                box.scrollTop = box.scrollHeight;
+
+                const panel = document.getElementById('chatPanel');
+                if(!panel.classList.contains('open') && data.sender !== me) {
+                    document.getElementById('chatNotif').style.display = 'inline';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
