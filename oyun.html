@@ -92,7 +92,7 @@
     <div class="main-area">
         <div class="grid-container" id="playerGrid">
             </div>
-        <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP)</button>
+        <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP) <span id="skipVoteCount">(0)</span></button>
     </div>
 
     <div id="chatPanel">
@@ -114,7 +114,7 @@
     </div>
 
     <div id="resultOverlay">
-        <div id="resultName">HESABLANIR...</div>
+        <div id="resultName"></div>
         <div id="resultRole"></div>
         <div id="resultNote"></div>
     </div>
@@ -155,6 +155,7 @@
             if(isHost && room.gameState !== 'day_discuss') {
                 setPhase('day_discuss', 30);
                 db.ref('rooms/' + code + '/votes').remove(); // Əvvəlki oyları sil
+                db.ref('rooms/' + code + '/eliminationResult').remove(); // Əvvəlki nəticəni sil
             }
 
             listenToGameState();
@@ -181,7 +182,7 @@
                     if(deadPlayers[sName]) card.classList.add('dead');
 
                     card.innerHTML = `
-                        <div class="p-name">${pName}</div>
+                        <div class="p-name" id="nameText_${sName}">${pName}</div>
                         <div class="vote-dots" id="dots_${sName}"></div>
                     `;
 
@@ -235,6 +236,7 @@
                 if(currentPhase === 'day_discuss') {
                     document.getElementById('phaseText').innerText = "SÖHBƏT VAXTI";
                     document.getElementById('skipBtn').style.display = 'none';
+                    document.getElementById('resultOverlay').style.display = 'none';
                     setCardsActive(false);
                 } 
                 else if(currentPhase === 'day_vote') {
@@ -251,6 +253,9 @@
                     closeModal();
                 } 
                 else if(currentPhase === 'day_elimination') {
+                    document.getElementById('phaseText').innerText = "ASILMA ANI";
+                    document.getElementById('skipBtn').style.display = 'none';
+                    setCardsActive(false);
                     document.getElementById('resultOverlay').style.display = 'flex';
                 }
 
@@ -324,19 +329,49 @@
             document.getElementById('skipBtn').style.display = 'none';
         };
 
-        // Səslərin Ekranda Görünməsi
+        // Səslərin Ekranda Görünməsi və Sayların Yazılması
         function listenToVotes() {
             db.ref('rooms/' + code + '/votes').on('value', snap => {
-                if(currentPhase === 'day_discuss') return; // Söhbət vaxtı oyları gizlət
-                
                 const votes = snap.val() || {};
-                // Nöqtələri təmizlə
-                document.querySelectorAll('.vote-dots').forEach(el => el.innerHTML = "");
-
-                // Oylama vaxtı yalnız kimin səs verdiyi bilinsin deyə gizli tutula bilər, 
-                // amma Among Usda səs verənin profilində işarə çıxır. 
-                // Reveal fazasında isə asılacaq adamın altında nöqtələr çıxır.
                 
+                // İlk növbədə adların qabağındakı köhnə sayları və nöqtələri təmizləyirik
+                Object.keys(playersData).forEach(sName => {
+                    const nameTextEl = document.getElementById('nameText_' + sName);
+                    if(nameTextEl) {
+                        nameTextEl.innerText = playersData[sName]; // Sadəcə oyunçu adı
+                    }
+                    const dotContainer = document.getElementById('dots_' + sName);
+                    if(dotContainer) dotContainer.innerHTML = "";
+                });
+                document.getElementById('skipVoteCount').innerText = "(0)";
+
+                if (currentPhase === 'day_discuss') return; // Söhbət vaxtı oyları gizlət
+                
+                // Hər kəsin neçə oy aldığını hesablayaq
+                let voteCounts = {};
+                let skipCount = 0;
+
+                for(let voter in votes) {
+                    const target = votes[voter];
+                    if(target === "SKIP") {
+                        skipCount++;
+                    } else {
+                        voteCounts[target] = (voteCounts[target] || 0) + 1;
+                    }
+                }
+
+                // Səs saylarını adların qarşısında yazırıq (day_vote və day_reveal fazalarında görünüb yenilənir)
+                for(let target in voteCounts) {
+                    const nameTextEl = document.getElementById('nameText_' + target);
+                    if(nameTextEl && playersData[target]) {
+                        nameTextEl.innerText = `${playersData[target]} (${voteCounts[target]})`;
+                    }
+                }
+                
+                // SKIP sayını düymə üzərində yeniləyirik
+                document.getElementById('skipVoteCount').innerText = `(${skipCount})`;
+
+                // Reveal və Elimination fəzalarında həmçinin altlarında nöqtələr də çıxsın
                 if(currentPhase === 'day_reveal' || currentPhase === 'day_elimination') {
                     for(let voter in votes) {
                         const target = votes[voter];
@@ -375,11 +410,15 @@
                 let maxVotes = 0;
                 let candidate = null;
                 let isTie = false;
+                let skipVotes = 0;
 
                 // Səsləri say
                 for(let voter in votes) {
                     const target = votes[voter];
-                    if(target === "SKIP") continue;
+                    if(target === "SKIP") {
+                        skipVotes++;
+                        continue;
+                    }
                     counts[target] = (counts[target] || 0) + 1;
                     
                     if(counts[target] > maxVotes) {
@@ -391,7 +430,10 @@
                     }
                 }
 
-                if(isTie || !candidate) {
+                // Əgər SKIP səsləri ən çox səs alan oyunçunun səsindən çoxdursa və ya bərabərdirsə, heç kim asılmır
+                if(skipVotes >= maxVotes && skipVotes > 0) {
+                    db.ref('rooms/' + code + '/eliminationResult').set("TIE");
+                } else if(isTie || !candidate) {
                     db.ref('rooms/' + code + '/eliminationResult').set("TIE");
                 } else {
                     db.ref('rooms/' + code + '/eliminationResult').set(candidate);
@@ -413,13 +455,14 @@
             if(result === "TIE") {
                 rNameEl.innerText = "HEÇ KİM ASILMADI";
                 rNameEl.style.color = "#888";
-                rRoleEl.innerText = "Səslər bərabər oldu və ya səs verilmədi.";
+                rRoleEl.innerText = "Səslər bərabər oldu, SKIP qalib gəldi və ya səs verilmədi.";
                 rNoteEl.innerText = "";
             } else {
                 const hungName = playersData[result];
                 const realRole = rolesData[result];
                 
                 rNameEl.innerText = hungName + " ASILDI!";
+                rNameEl.style.color = "#ff0000";
                 
                 // XÜSUSİ ROL MƏNTİQİ:
                 if(realRole === "Gizli Mafiya") {
@@ -430,12 +473,13 @@
                 else if(realRole === "Psixopat") {
                     rRoleEl.innerText = "Rolu: Psixopat";
                     rNoteEl.innerText = "Lakin o Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
-                    // Ölmədi, deadPlayers-ə əlavə etmirik. (1 canı getdi məntiqi mürəkkəbdir deyə sağ buraxırıq)
+                    // Ölmədi, deadPlayers-ə əlavə etmirik.
                 }
                 else if(realRole === "Canlı Bomba") {
                     rRoleEl.innerText = "Rolu: Canlı Bomba";
                     rNoteEl.innerText = "Ona səs verən hər kəs onunla birlikdə partladı!";
                     db.ref('rooms/' + code + '/deadPlayers/' + result).set(true);
+                    
                     // Bomba partlayışı effektini tam etmək üçün ona səs verənləri də öldür
                     db.ref('rooms/' + code + '/votes').once('value', vSnap => {
                         const vs = vSnap.val() || {};
