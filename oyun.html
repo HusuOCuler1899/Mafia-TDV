@@ -597,3 +597,77 @@
     </script>
 </body>
 </html>
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
+
+<script>
+    const AGORA_APP_ID = "0b6c9c3436ad44baa6fdadc8d60971e3"; 
+    const CHANNEL_NAME = "Bayram_MainRoom"; 
+    const TOKEN = null; 
+
+    let rtc = {
+        client: null,
+        localAudioTrack: null
+    };
+
+    let isMuted = false;
+
+    window.addEventListener("DOMContentLoaded", () => {
+        initAgoraClient();
+    });
+
+    function initAgoraClient() {
+        rtc.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        
+        rtc.client.on("user-published", async (user, mediaType) => {
+            await rtc.client.subscribe(user, mediaType);
+            if (mediaType === "audio") {
+                user.audioTrack.play();
+            }
+        });
+    }
+
+    async function joinVoiceChat() {
+        try {
+            const playerState = JSON.parse(localStorage.getItem("gameStatePlayers")) || [];
+            const myUID = playerState.length > 0 ? playerState[0].name : "Player_" + Math.floor(Math.random() * 1000);
+
+            await rtc.client.join(AGORA_APP_ID, CHANNEL_NAME, TOKEN, myUID);
+            
+            rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            await rtc.client.publish([rtc.localAudioTrack]);
+            
+            isMuted = false;
+            console.log("Səsli çata qoşuldu.");
+        } catch (error) {
+            console.error("Mikrofon bağlantı xətası:", error);
+        }
+    }
+
+    async function toggleMute() {
+        if (!rtc.localAudioTrack) return;
+
+        if (!isMuted) {
+            await rtc.localAudioTrack.setEnabled(false);
+            isMuted = true;
+            console.log("Səs bağlandı (Muted).");
+        } else {
+            await rtc.localAudioTrack.setEnabled(true);
+            isMuted = false;
+            console.log("Səs açıldı (Unmuted).");
+        }
+    }
+
+    async function leaveVoiceChat() {
+        if (rtc.localAudioTrack) {
+            rtc.localAudioTrack.close();
+        }
+        if (rtc.client) {
+            await rtc.client.leave();
+        }
+        console.log("Səsli çatdan çıxıldı.");
+    }
+
+    window.addEventListener("beforeunload", () => {
+        leaveVoiceChat();
+    });
+</script>
