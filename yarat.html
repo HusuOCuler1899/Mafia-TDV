@@ -458,7 +458,6 @@
             const pKeys = Object.keys(playersObj);
             const pCount = pKeys.length;
             
-            // Sənin sənədindəki dəqiq və unikal 30 rolun tam ardıcıl siyahısı
             const masterList = [
                 "Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", 
                 "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", 
@@ -470,13 +469,11 @@
 
             let rolesPool = [];
             
-            // 2 nəfərlik test və ya minimal oyun üçün xüsusi tarazlıq balansı
             if (pCount === 2) {
                 rolesPool = ["Sadə Mafiya", "Həkim"];
             } else if (pCount === 3) {
                 rolesPool = ["Sadə Mafiya", "Həkim", "Detektiv"];
             } else {
-                // Oyunçu sayı neçədirsə, masterList ardıcıllığından tam o qədər fərqli rol kəsilir (hərəsindən 1 dənə)
                 for (let i = 0; i < pCount; i++) {
                     if (masterList[i]) {
                         rolesPool.push(masterList[i]);
@@ -486,13 +483,11 @@
                 }
             }
 
-            // Rolları tamamilə qarışdırırıq ki, hamıya təsadüfi paylansın
             for (let i = rolesPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
             }
 
-            // Qarışdırılmış unikal rolları oyunçuların ID-lərinə mənsub edirik
             let finalAssignedRoles = {};
             pKeys.forEach((key, index) => { 
                 finalAssignedRoles[key] = rolesPool[index]; 
