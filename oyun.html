@@ -171,7 +171,6 @@
             }
 
             listenToRoomUpdates();
-            // Əgər listenToChat() funksiyası varsa, burada saxlayırıq. 
             if (typeof listenToChat === "function") listenToChat();
         });
 
@@ -193,7 +192,6 @@
 
                 buildGrid();
 
-                // OYUN BİTDİKDƏ EKRANA ÇIXARMA
                 if (currentPhase === 'game_over') {
                     document.getElementById('resultMainText').innerText = "OYUN BİTDİ!";
                     document.getElementById('resultNote').innerText = room.winner || "";
@@ -272,7 +270,12 @@
                 if(target === "SKIP") skipC++;
                 else voteCounts[target] = (voteCounts[target] || 0) + 1;
             }
-            document.getElementById('skipCount').innerText = skipC;
+            
+            // XƏTAYA SƏBƏB OLAN HİSSƏ BURADA DÜZƏLDİLDİ
+            let skipCountEl = document.getElementById('skipCount');
+            if (skipCountEl) {
+                skipCountEl.innerText = skipC;
+            }
 
             let aliveCount = pKeys.filter(p => !deadPlayers[p]).length;
             let totalVotes = Object.keys(votes).length;
@@ -319,7 +322,6 @@
             buildGrid();
         }
 
-        // --- PROBLEM 1: SƏS VƏ SKIP İKİSİ EYNİ ANDA SEÇİLMƏYƏCƏK ---
         function castVote() {
             if(!mySelectedTarget) { alert("Səs vermək üçün bir nəfər seçin!"); return; }
             db.ref('rooms/' + code + '/votes/' + safeMe).set(mySelectedTarget);
@@ -332,7 +334,8 @@
             mySelectedTarget = null;
             db.ref('rooms/' + code + '/votes/' + safeMe).set("SKIP");
             
-            document.getElementById('skipBtn').innerText = "SKİP EDİLDİ ✓";
+            // XƏTAYA SƏBƏB OLAN HİSSƏ BURADA DÜZƏLDİLDİ
+            document.getElementById('skipBtn').innerHTML = "SKİP EDİLDİ ✓ (<span id='skipCount'>0</span>)";
             document.getElementById('voteBtn').innerText = "Səs Ver";
             buildGrid();
         }
@@ -370,4 +373,4 @@
                     }
                 });
                 
-                if (Object.keys(updates).length > 0) db.ref().update(update
+                
