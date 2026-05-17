@@ -100,7 +100,6 @@
         let mySelectedTarget = null;
         let timerInterval = null;
 
-        // Sənəddəki tam 21 mərhələli ardıcıllıq
         const NIGHT_SEQUENCE = [
             "Eros", "Qan Qardaşı", "Türmə rəisi", "Oğru", "Gözəlçə", "Hiyləgər Mafiya",
             "Vəkil", "Həkim", "Cismani mühafizəçi", "Fedai", "Nəzarətçi", "Xəfiyyə Mafiya",
@@ -131,6 +130,8 @@
 
                 playersData = room.players || {};
                 deadPlayers = room.deadPlayers || {};
+                rolesData = room.assignedRoles || {};
+                myRole = rolesData[safeMe] || "Dinc Sakin";
                 amIDead = !!deadPlayers[safeMe];
                 setupDeadChat();
 
@@ -147,11 +148,9 @@
             });
         }
 
-        // --- HOST ÜÇÜN AVTOMATİK GECƏ DÖNGÜSÜ ---
         function processNightTurn(index) {
             if(!isHost) return;
 
-            // Bütün rollar bitdikdə NƏTİCƏLƏR HESABLANIR və GÜNDÜZƏ QAYIDILIR
             if(index >= NIGHT_SEQUENCE.length) {
                 calculateNightResults();
                 return;
@@ -167,13 +166,11 @@
                 Object.keys(rolesData).forEach(p => { if(rolesData[p] === roleToCheck && !deadPlayers[p]) isRoleAlive = true; });
             }
 
-            // O roldan canlı adam yoxdursa 0 saniyə gözləyir, anında keçir!
             if(!isRoleAlive) {
                 processNightTurn(index + 1);
                 return;
             }
 
-            // Varsa, 15 saniyə vaxt verir
             db.ref('rooms/' + code).update({
                 currentNightRole: roleToCheck,
                 phaseEndTime: Date.now() + 15000,
@@ -181,7 +178,6 @@
             });
         }
 
-        // --- OYUNÇU UI YENİLƏNMƏSİ ---
         function handleTurnChange(room) {
             clearInterval(timerInterval);
             mySelectedTarget = null;
@@ -214,6 +210,7 @@
         }
 
         function checkIsMyTurn(turnRole) {
+            if(!turnRole || !myRole || myRole === "Dinc Sakin") return false;
             if(turnRole === "Mafiya Komandası") {
                 const mafiaRoles = ["Sadə Mafiya", "Don", "Aypara", "Gizli Mafiya", "Xəfiyyə Mafiya", "Hiyləgər Mafiya"];
                 return mafiaRoles.includes(myRole);
@@ -278,7 +275,6 @@
             }
         }
 
-        // --- GECƏNİN NƏTİCƏLƏRİNİN HESABLANMASI (QISALTMA OLMADAN, HƏYATİ MƏNTİQ) ---
         function calculateNightResults() {
             db.ref('rooms/' + code + '/nightActions').once('value', snap => {
                 const actions = snap.val() || {};
@@ -291,7 +287,6 @@
                 let detektivTarget = null;
                 let newDead = {};
 
-                // 1. Əvvəlcə bloklayanları (Oğru, Türmə Rəisi) və Qoruyanları (Həkim, Vəkil) tapırıq
                 for(let p in actions) {
                     let act = actions[p];
                     if(act.role === "Oğru" || act.role === "Türmə rəisi") { blockedPlayers.push(act.target); }
@@ -300,30 +295,26 @@
                     }
                 }
 
-                // 2. Qatillərin hədəflərini təyin edirik (Bloklanan qatil hərəkət edə bilməz)
                 for(let p in actions) {
                     let act = actions[p];
-                    if(blockedPlayers.includes(p)) continue; // Bloklanıb
+                    if(blockedPlayers.includes(p)) continue;
 
                     if(act.turnGroup === "Mafiya Komandası") {
                         mafiaTargetCounts[act.target] = (mafiaTargetCounts[act.target] || 0) + 1;
                     }
                     if(act.role === "Psixopat") psixopatTarget = act.target;
-                    if(act.role === "Detektiv") detektivTarget = act.target; // Detektiv güllə atıbsa
+                    if(act.role === "Detektiv") detektivTarget = act.target;
                 }
 
-                // Mafiyanın ümumi qərarı
                 let maxM = 0;
                 for(let t in mafiaTargetCounts) {
                     if(mafiaTargetCounts[t] > maxM) { maxM = mafiaTargetCounts[t]; finalMafiaTarget = t; }
                 }
 
-                // 3. Ölümlərin Tətbiqi (Qorunmayanlar ölür)
                 if(finalMafiaTarget && !protectedPlayers.includes(finalMafiaTarget)) newDead[finalMafiaTarget] = true;
                 if(psixopatTarget && !protectedPlayers.includes(psixopatTarget)) newDead[psixopatTarget] = true;
                 if(detektivTarget && !protectedPlayers.includes(detektivTarget)) newDead[detektivTarget] = true;
 
-                // Nəticə Mətninin Hazırlanması
                 let killedNames = [];
                 for(let d in newDead) {
                     if(playersData[d]) killedNames.push(playersData[d]);
@@ -332,12 +323,11 @@
                 let summaryText = "Gecə sakit keçdi. Heç kim ölmədi.";
                 if(killedNames.length > 0) summaryText = `Gecə hücumları nəticəsində öldürülənlər: ${killedNames.join(', ')}`;
 
-                // Bazaya Ölənləri, Nəticə Mətnini yazırıq və Gündüzə (oyun.html) qayıdırıq
                 let updates = { 
                     gameState: 'day_discuss', 
                     currentNightRole: null,
                     lastNightSummary: summaryText,
-                    nightCounter: Math.floor(Math.random() * 10000) // Trigger üçün
+                    nightCounter: Math.floor(Math.random() * 10000)
                 };
                 
                 for(let d in newDead) {
@@ -348,7 +338,6 @@
             });
         }
 
-        // --- GHOST CHAT MƏNTİQİ ---
         function setupDeadChat() {
             const chatBtn = document.getElementById('chatBtn');
             if(amIDead) {
