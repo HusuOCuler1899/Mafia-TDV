@@ -122,7 +122,7 @@
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
     <div id="voice-chat-panel" style="background: #1f2833; border: 2px solid #66fcf1; padding: 15px; border-radius: 8px; margin: 10px auto; max-width: 400px; text-align: center; position:relative; z-index:100;">
         <h3 style="color: #66fcf1; margin-top: 0; margin-bottom: 5px;">SƏSLİ ÇAT</h3>
-        <p id="vc-status" style="color: #c5c6c7; font-size: 14px;">Status: Qoşulmayıb (HTTPS və ya Localhost tələb edir)</p>
+        <p id="vc-status" style="color: #c5c6c7; font-size: 14px;">Status: Qoşulmayıb</p>
         <div style="display: flex; gap: 10px; justify-content: center;">
             <button class="action-btn" id="btn-join-vc" onclick="joinVoiceChat()" style="background: #66fcf1; color: black;">Qoşul</button>
             <button class="action-btn" id="btn-mute-vc" onclick="toggleMute()" style="background: #ff4d4d; color: white; display: none;">Səsi Bağla</button>
@@ -466,7 +466,7 @@
         }
 
         // ================= VOICE CHAT (AGORA) =================
-        const AGORA_APP_ID = "0b6c9c3436ad44baa6fdadc8d60971e3"; 
+        const AGORA_APP_ID = "a536b9c58d5b4559ad07e41ddef5f9a0"; 
         const CHANNEL_NAME = "Bayram_MainRoom"; 
         const TOKEN = null; 
         let rtc = { client: null, localAudioTrack: null };
