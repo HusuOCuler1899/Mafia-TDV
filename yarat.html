@@ -7,144 +7,256 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
-        body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow-x: hidden; }
-        .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
-        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.3); }
-        
-        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; }
-        
-        .container { margin: 80px auto; width: 95%; max-width: 1000px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.2); }
-        
-        h1, h2 { color: #ff0000; text-transform: uppercase; margin-bottom: 20px; text-align: center; }
-        .p-list { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 20px; padding: 10px; }
-        .p-item { background: rgba(255,0,0,0.1); border: 1px solid #ff0000; padding: 15px 25px; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; min-width: 150px; justify-content: center; position: relative; }
-        .host-tag { color: #4ade80; font-size: 0.7rem; border: 1px solid #4ade80; padding: 2px 5px; font-weight: bold; position: absolute; top: -10px; right: 5px; background: #000; }
-        
-        .setup-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; }
-        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; flex: 1; min-width: 250px; text-align: center; outline: none; }
-        .range-box { flex: 1; min-width: 200px; text-align: center; }
-        
-        .btn { padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: #ff0000; color: white; }
-        
-        input[type="range"] { width: 100%; accent-color: #ff0000; }
-        .action-row { display: flex; gap: 15px; justify-content: center; margin-top: 40px; flex-wrap: wrap; }
-        .action-row .btn { flex: 1; min-width: 200px; }
-        #timerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #countdownText { font-size: 8rem; color: #ff0000; text-shadow: 0 0 30px #ff0000; margin-bottom: 20px; }
-        .timer-info { color: white; font-size: 1.2rem; max-width: 80%; margin-bottom: 30px; }
-        
-        @media (max-width: 600px) {
-            .setup-row { flex-direction: column; }
-            .p-item { width: 45%; font-size: 1rem; }
-            #countdownText { font-size: 5rem; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Courier New', Courier, monospace; 
         }
-
-        /* ÇAT SİSTEMİ CSS AYARLARI */
-        #chatBtn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #000;
-            border: 2px solid #ff0000;
-            color: #ff0000;
-            padding: 12px 20px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 1000;
-            text-transform: uppercase;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
-            transition: 0.3s;
+        body, html { 
+            height: 100%; 
+            width: 100%; 
+            background-color: #000; 
+            color: white; 
+            overflow-x: hidden; 
         }
-        #chatBtn:hover {
-            background: #ff0000;
-            color: #fff;
+        .bg-container { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
         }
-        #chatPanel {
-            position: fixed;
-            top: 0;
-            right: -350px;
-            width: 320px;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            border-left: 2px solid #ff0000;
-            z-index: 1001;
-            display: flex;
-            flex-direction: column;
-            transition: right 0.3s ease;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.7);
+        .bg { 
+            width: 100%; 
+            height: 100%; 
+            background: url('babba.jpg') center/cover no-repeat; 
+            filter: brightness(0.3); 
         }
-        #chatPanel.open {
-            right: 0;
+        #codeTag { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            color: #4ade80; 
+            border: 1px solid #4ade80; 
+            padding: 10px; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 100; 
+            font-weight: bold; 
         }
-        .chat-header {
-            padding: 15px;
-            background: #111;
-            border-bottom: 1px solid #ff0000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .container { 
+            margin: 80px auto; 
+            width: 95%; 
+            max-width: 1000px; 
+            background: rgba(0,0,0,0.85); 
+            padding: 25px; 
+            border: 2px solid #ff0000; 
+            box-shadow: 0 0 20px rgba(255,0,0,0.2); 
+            text-align: center; 
         }
-        .chat-header h3 {
-            color: #ff0000;
-            font-size: 1.1rem;
-            text-transform: uppercase;
+        h1, h2 { 
+            color: #ff0000; 
+            text-transform: uppercase; 
+            margin-bottom: 20px; 
         }
-        .close-chat {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.5rem;
-            cursor: pointer;
+        .p-list { 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 15px; 
+            margin-top: 20px; 
+            padding: 10px; 
         }
-        .chat-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .p-item { 
+            background: rgba(255,0,0,0.1); 
+            border: 1px solid #ff0000; 
+            padding: 15px 25px; 
+            font-size: 1.2rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            min-width: 150px; 
+            justify-content: center; 
+            position: relative; 
         }
-        .msg {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 0.95rem;
-            word-break: break-word;
-            border-left: 3px solid #ff0000;
+        .host-tag { 
+            color: #4ade80; 
+            font-size: 0.7rem; 
+            border: 1px solid #4ade80; 
+            padding: 2px 5px; 
+            font-weight: bold; 
+            position: absolute; 
+            top: -10px; 
+            right: 5px; 
+            background: #000; 
         }
-        .msg span {
-            color: #4ade80;
-            font-weight: bold;
-            display: block;
-            font-size: 0.85rem;
-            margin-bottom: 2px;
+        .setup-row { 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 20px; 
         }
-        .chat-input-area {
-            padding: 15px;
-            border-top: 1px solid #ff0000;
-            background: #111;
-            display: flex;
-            gap: 5px;
+        input[type="text"] { 
+            padding: 15px; 
+            border: 2px solid #ff0000; 
+            background: #000; 
+            color: white; 
+            flex: 1; 
+            min-width: 250px; 
+            text-align: center; 
+            outline: none; 
         }
-        #chatInput {
-            flex: 1;
-            padding: 10px;
-            background: #000;
-            border: 1px solid #ff0000;
-            color: #fff;
-            outline: none;
-            font-family: monospace;
+        .range-box { 
+            flex: 1; 
+            min-width: 200px; 
+            text-align: center; 
         }
-        #sendChatBtn {
-            background: #ff0000;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
+        .btn { 
+            padding: 15px 30px; 
+            font-size: 1.1rem; 
+            font-weight: bold; 
+            border: 2px solid #ff0000; 
+            background: none; 
+            color: #ff0000; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            transition: 0.3s; 
+        }
+        .btn:hover { 
+            background: #ff0000; 
+            color: white; 
+        }
+        input[type="range"] { 
+            width: 100%; 
+            accent-color: #ff0000; 
+        }
+        .action-row { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center; 
+            margin-top: 40px; 
+            flex-wrap: wrap; 
+        }
+        .action-row .btn { 
+            flex: 1; 
+            min-width: 200px; 
+        }
+        #timerOverlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.95); 
+            z-index: 999; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+        }
+        #countdownText { 
+            font-size: 8rem; 
+            color: #ff0000; 
+            text-shadow: 0 0 30px #ff0000; 
+            margin-bottom: 20px; 
+        }
+        .timer-info { 
+            color: white; 
+            font-size: 1.2rem; 
+            max-width: 80%; 
+            margin-bottom: 30px; 
+        }
+        #chatBtn { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            background: #000; 
+            border: 2px solid #ff0000; 
+            color: #ff0000; 
+            padding: 12px 20px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            z-index: 1000; 
+            text-transform: uppercase; 
+        }
+        #chatBtn:hover { 
+            background: #ff0000; 
+            color: #fff; 
+        }
+        #chatPanel { 
+            position: fixed; 
+            top: 0; 
+            right: -350px; 
+            width: 320px; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.95); 
+            border-left: 2px solid #ff0000; 
+            z-index: 1001; 
+            display: flex; 
+            flex-direction: column; 
+            transition: right 0.3s ease; 
+        }
+        #chatPanel.open { 
+            right: 0; 
+        }
+        .chat-header { 
+            padding: 15px; 
+            background: #111; 
+            border-bottom: 1px solid #ff0000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            color: #ff0000; 
+            font-weight: bold; 
+        }
+        .chat-messages { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .msg { 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            font-size: 0.95rem; 
+            word-break: break-word; 
+            border-left: 3px solid #ff0000; 
+            text-align: left; 
+        }
+        .msg span { 
+            color: #4ade80; 
+            font-weight: bold; 
+        }
+        .chat-input-area { 
+            padding: 15px; 
+            border-top: 1px solid #ff0000; 
+            background: #111; 
+            display: flex; 
+            gap: 5px; 
+        }
+        #chatInput { 
+            flex: 1; 
+            padding: 10px; 
+            background: #000; 
+            border: 1px solid #ff0000; 
+            color: #fff; 
+            outline: none; 
+        }
+        #sendChatBtn { 
+            background: #ff0000; 
+            color: #fff; 
+            border: none; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
         }
     </style>
 </head>
@@ -170,21 +282,18 @@
         </div>
     </div>
     
-    <div id="lobbyArea" class="container" style="display:none; text-align: center;">
+    <div id="lobbyArea" class="container" style="display:none;">
         <h2 id="roomTitle"></h2>
         <div class="p-list" id="playersDiv"></div>
         <div class="action-row">
-            <button type="button" class="btn" id="startGameBtn" style="display:none;">OYUNU BAŞLAT</button>
+            <button type="button" class="btn" id="startGameBtn" style="display:none; background:#00ff00; color:#000; border:none;">OYUNU BAŞLAT</button>
             <button type="button" class="btn" style="border-color:#555; color:#aaa;" id="exitBtn">OTAQDAN ÇIX</button>
         </div>
     </div>
 
     <div id="chatBtn" style="display: none;" onclick="toggleChat()">Çat <span id="chatNotif" style="display:none; color:#4ade80;">●</span></div>
     <div id="chatPanel">
-        <div class="chat-header">
-            <h3>Otaq Çatı</h3>
-            <button class="close-chat" onclick="toggleChat()">&times;</button>
-        </div>
+        <div class="chat-header"><span>Otaq Çatı</span><button onclick="toggleChat()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.2rem;">✕</button></div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Mesaj yazın...">
@@ -194,12 +303,12 @@
 
     <script>
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         
         let localPlayerCount = 0;
         let countdownInt = null;
-        let chatListenerRef = null;
+        let playersData = {};
 
         document.getElementById("limitRange").oninput = function() { 
             document.getElementById("limitVal").innerText = this.value; 
@@ -207,18 +316,13 @@
 
         function leaveRoom() {
             const code = new URLSearchParams(window.location.search).get('join');
-            const me = localStorage.getItem("mafia_nickname") || "Agent";
+            const me = localStorage.getItem("mafia_nickname");
             if(code && me) {
                 const safeMe = me.replace(/[.#$/\[\]]/g, "_");
                 const ref = db.ref('rooms/' + code);
                 ref.once('value').then(s => {
                     const room = s.val(); 
                     if(!room) return;
-                    
-                    if(chatListenerRef) {
-                        db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
-                    }
-
                     ref.child('players/' + safeMe).remove().then(() => {
                         if(room.host === me) {
                             const pKeys = room.players ? Object.keys(room.players).filter(k => k !== safeMe) : [];
@@ -232,8 +336,8 @@
                         location.href = 'index.html';
                     });
                 });
-            } else {
-                location.href = 'index.html';
+            } else { 
+                location.href = 'index.html'; 
             }
         }
 
@@ -242,13 +346,11 @@
 
         document.getElementById("startBtn").onclick = function() {
             const name = document.getElementById("roomNameInp").value.trim();
-            if(!name) {
-                alert("Zəhmət olmasa otaq adı daxil edin!");
-                return;
-            }
+            if(!name) return alert("Otaq adı daxil edin!");
             const limit = document.getElementById("limitRange").value;
             const code = "U" + Math.floor(100000 + Math.random() * 899999);
-            const user = localStorage.getItem("mafia_nickname") || "Anonim";
+            const user = localStorage.getItem("mafia_nickname");
+            if(!user) return alert("Adınız tapılmadı!");
             const safeUser = user.replace(/[.#$/\[\]]/g, "_");
             
             const data = { 
@@ -259,7 +361,6 @@
                 players: {} 
             };
             data.players[safeUser] = user;
-            
             db.ref('rooms/' + code).set(data).then(() => { 
                 location.href = "yarat.html?join=" + code; 
             });
@@ -272,68 +373,14 @@
             }
         };
 
-        // ÇAT SİSTEMİ FUNKSİYALARI
-        function toggleChat() {
-            const panel = document.getElementById('chatPanel');
-            panel.classList.toggle('open');
-            document.getElementById('chatNotif').style.display = 'none';
-        }
-
-        function sendMessage() {
-            const code = new URLSearchParams(window.location.search).get('join');
-            const me = localStorage.getItem("mafia_nickname") || "Agent";
-            const input = document.getElementById('chatInput');
-            const txt = input.value.trim();
-            if(!txt || !code) return;
-            
-            db.ref('rooms/' + code + '/chat').push({
-                sender: me,
-                msg: txt,
-                time: Date.now()
-            });
-            input.value = "";
-        }
-
-        document.getElementById('chatInput').addEventListener("keypress", function(event) {
-            if (event.key === "Enter") { 
-                event.preventDefault(); 
-                sendMessage(); 
-            }
-        });
-
-        function listenToChat(code) {
-            const me = localStorage.getItem("mafia_nickname") || "Agent";
-            const box = document.getElementById('chatMessages');
-            box.innerHTML = ""; 
-            
-            if(chatListenerRef) {
-                db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
-            }
-
-            chatListenerRef = db.ref('rooms/' + code + '/chat').on('child_added', snap => {
-                const data = snap.val();
-                if(!data) return;
-                
-                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
-                box.scrollTop = box.scrollHeight;
-                
-                const panel = document.getElementById('chatPanel');
-                if(!panel.classList.contains('open') && data.sender !== me) {
-                    document.getElementById('chatNotif').style.display = 'inline';
-                }
-            });
-        }
-
         window.onload = function() {
             const code = new URLSearchParams(window.location.search).get('join');
-            if(!code) {
-                document.getElementById("setupArea").style.display = "block";
-                document.getElementById("lobbyArea").style.display = "none";
-                document.getElementById("chatBtn").style.display = "none";
-                return;
+            if(!code) return;
+            const me = localStorage.getItem("mafia_nickname");
+            if(!me) { 
+                location.href = "index.html"; 
+                return; 
             }
-            
-            const me = localStorage.getItem("mafia_nickname") || "Agent";
             const safeMe = me.replace(/[.#$/\[\]]/g, "_");
             
             db.ref('rooms/' + code + '/players/' + safeMe).set(me).then(() => {
@@ -348,14 +395,25 @@
                     return; 
                 }
                 
+                playersData = room.players || {};
                 const isHost = (me === room.host);
-                const currentPlayersCount = room.players ? Object.keys(room.players).length : 0;
+                const currentPlayersCount = Object.keys(playersData).length;
                 
                 if (room.gameState === 'countdown' && localPlayerCount > 0 && currentPlayersCount !== localPlayerCount) {
-                    if (isHost) db.ref('rooms/' + code + '/gameState').set('waiting');
+                    if (isHost) {
+                        db.ref('rooms/' + code + '/gameState').set('waiting');
+                    }
                 }
-                
                 localPlayerCount = currentPlayersCount;
+                
+                if (room.gameState === 'opening') {
+                    window.location.href = "opening.html?join=" + code;
+                    return;
+                } else if (room.gameState !== 'waiting' && room.gameState !== 'countdown') {
+                    window.location.href = "oyun.html?join=" + code;
+                    return;
+                }
+
                 document.getElementById("setupArea").style.display = "none";
                 document.getElementById("lobbyArea").style.display = "block";
                 document.getElementById("codeTag").innerText = "KOD: " + code;
@@ -365,7 +423,7 @@
                 
                 const pDiv = document.getElementById("playersDiv");
                 pDiv.innerHTML = "";
-                Object.values(room.players || {}).forEach(p => {
+                Object.values(playersData).forEach(p => {
                     pDiv.innerHTML += `<div class="p-item">${p === room.host ? '<span class="host-tag">HOST</span>' : ''}${p}</div>`;
                 });
                 
@@ -379,24 +437,112 @@
                             document.getElementById('countdownText').innerText = t;
                             if (t <= 0) {
                                 clearInterval(countdownInt);
-                                if (isHost) db.ref('rooms/' + code + '/gameState').set('started');
+                                countdownInt = null;
+                                if (isHost) {
+                                    assignRolesAndOpen(code, playersData);
+                                }
                             }
                         }, 1000);
                     }
-                } else if (room.gameState === 'started') {
-                    if(chatListenerRef) {
-                        db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
-                    }
-                    location.href = "opening.html?join=" + code;
                 } else {
                     document.getElementById('timerOverlay').style.display = 'none';
-                    if (countdownInt) {
-                        clearInterval(countdownInt);
-                        countdownInt = null;
+                    if (countdownInt) { 
+                        clearInterval(countdownInt); 
+                        countdownInt = null; 
                     }
                 }
             });
         };
+
+        function assignRolesAndOpen(roomCode, playersObj) {
+            const pKeys = Object.keys(playersObj);
+            const pCount = pKeys.length;
+            let rolesPool = [];
+
+            if (pCount === 2) {
+                rolesPool = ["Sadə Mafiya", "Dinc Sakin"];
+            } else if (pCount === 3) {
+                rolesPool = ["Sadə Mafiya", "Dinc Sakin", "Həkim"];
+            } else if (pCount === 4) {
+                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim"];
+            } else if (pCount === 5) {
+                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim", "Detektiv"];
+            } else {
+                const masterList = ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"];
+                for (let i = 0; i < pCount; i++) { 
+                    rolesPool.push(masterList[i] || "Dinc Sakin"); 
+                }
+            }
+
+            const mafiaTeamRoles = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya"];
+            if (!rolesPool.some(role => mafiaTeamRoles.includes(role))) { 
+                rolesPool[0] = "Sadə Mafiya"; 
+            }
+
+            for (let i = rolesPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
+            }
+
+            let finalAssignedRoles = {};
+            pKeys.forEach((key, index) => { 
+                finalAssignedRoles[key] = rolesPool[index]; 
+            });
+
+            db.ref('rooms/' + roomCode).update({
+                assignedRoles: finalAssignedRoles,
+                gameState: 'opening', 
+                votes: null, 
+                eliminationResult: null, 
+                winner: null, 
+                deadPlayers: null
+            });
+        }
+
+        function toggleChat() {
+            document.getElementById('chatPanel').classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const code = new URLSearchParams(window.location.search).get('join');
+            const me = localStorage.getItem("mafia_nickname");
+            const txt = document.getElementById('chatInput').value.trim();
+            if(!txt || !code) return;
+            db.ref('rooms/' + code + '/chat').push({ 
+                sender: me, 
+                msg: txt, 
+                time: Date.now() 
+            });
+            document.getElementById('chatInput').value = "";
+        }
+
+        document.getElementById('chatInput').addEventListener("keypress", e => { 
+            if(e.key === "Enter") { 
+                e.preventDefault(); 
+                sendMessage(); 
+            } 
+        });
+
+        document.body.addEventListener("keypress", e => {
+            if(e.key === "Enter" && document.activeElement === document.getElementById('chatInput')) {
+                sendMessage();
+            }
+        });
+
+        function listenToChat(code) {
+            const me = localStorage.getItem("mafia_nickname");
+            db.ref('rooms/' + code + '/chat').on('child_added', snap => {
+                const data = snap.val();
+                if(!data) return;
+                const box = document.getElementById('chatMessages');
+                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> <br>${data.msg}</div>`;
+                box.scrollTop = box.scrollHeight;
+                if(!document.getElementById('chatPanel').classList.contains('open') && data.sender !== me) {
+                    document.getElementById('chatNotif').style.display = 'inline';
+                }
+            });
+        }
     </script>
 </body>
 </html>
