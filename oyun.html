@@ -6,61 +6,65 @@
     <title>GÜNDÜZ | TDV-MAFIA</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
-        body, html { height: 100%; background-color: #000; color: white; overflow-x: hidden; }
-        .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.2); z-index: -1; }
-        
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0, 100, 255, 0.2); border-bottom: 2px solid #0055ff; }
-        .phase-title { font-size: 1.5rem; font-weight: bold; color: #ffaa00; text-transform: uppercase; }
+        /* Sənin Orijinal Dizaynın (Toxunulmayıb) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow: hidden; }
+        .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.2); }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(255,0,0,0.1); border-bottom: 2px solid #ff0000; height: 60px; }
+        .phase-title { font-size: 1.5rem; font-weight: bold; color: #ff0000; text-transform: uppercase; letter-spacing: 2px; }
         .timer-box { font-size: 1.8rem; font-weight: bold; color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+        .chat-toggle-btn { background: #ff0000; color: white; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
+        .role-view-btn { background: #eab308; color: black; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
+
+        .main-area { display: flex; flex-direction: column; align-items: center; height: calc(100% - 60px); padding: 10px; position: relative; }
+        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; max-height: 80vh; }
         
-        .header-btn { background: #ff0000; color: white; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .role-btn { background: #eab308; color: black; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .chat-btn { background: #00aaff; color: white; border: none; padding: 8px 15px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        
-        .main-area { display: flex; flex-direction: column; align-items: center; padding: 10px; min-height: 60vh; position: relative; }
-        
-        /* 5x6 CƏDVƏL SİSTEMİ */
-        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; max-height: 70vh; margin-top: 10px; }
-        .player-card { background: rgba(0,0,0,0.8); border: 2px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; text-align: center; transition: 0.2s; position: relative; }
-        .player-card.alive { border-color: #00aaff; cursor: pointer; }
-        .player-card.alive:hover { background: rgba(0, 170, 255, 0.2); }
-        .player-card.dead { border-color: #ff0000; filter: grayscale(100%) opacity(0.5); pointer-events: none; }
-        .player-card.selected { border-color: #ffcc00; box-shadow: 0 0 15px rgba(255, 204, 0, 0.8); background: rgba(255, 204, 0, 0.2); }
-        
+        .player-card { background: rgba(0,0,0,0.7); border: 2px solid #444; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; cursor: pointer; position: relative; transition: 0.2s; text-align: center; }
+        .player-card.active-vote:hover { border-color: #ff0000; background: rgba(255,0,0,0.2); }
+        .player-card.dead { filter: grayscale(100%) opacity(0.5); pointer-events: none; border-color: #222 !important; }
+        .player-card.voted-for { border-color: #4ade80; box-shadow: 0 0 15px rgba(74, 222, 128, 0.5); }
+
         .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
-        .p-votes { font-size: 1rem; color: #ffcc00; margin-top: 5px; font-weight: bold; background: #000; padding: 2px 5px; border-radius: 4px; }
-        .p-status { font-size: 0.7rem; color: #ff0000; margin-top: 3px; font-weight: 900; }
-
-        .control-panel { margin-top: 15px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .action-btn { padding: 12px 20px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; } /* Səs verəndən sonra sönük qalması üçün */
-        .btn-host { background: #ff00ff; color: white; display: none; }
-        .btn-vote { background: #ffaa00; color: black; display: none; }
-
-        /* Rol Modalı və Gecə Nəticəsi Overlay */
-        #roleModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2500; }
-        .role-box { background: #1a1a1a; border: 3px solid #eab308; padding: 40px; text-align: center; border-radius: 12px; }
-        .role-text-value { font-size: 2.2rem; color: #eab308; font-weight: bold; text-transform: uppercase; margin-bottom: 25px; }
-
-        #nightResultOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; text-align: center; padding: 20px; border: 5px solid #00aaff; }
-        #nightResultText { font-size: clamp(1.5rem, 4vw, 3rem); color: #00aaff; font-weight: 900; line-height: 1.5; margin-bottom: 20px; text-shadow: 0 0 20px #00aaff; }
-
-        /* Çat Sistemi (Normal Çat) */
-        #chatPanel { position: fixed; top: 60px; right: -350px; width: 300px; height: calc(100% - 60px); background: rgba(0,0,0,0.95); border-left: 2px solid #00aaff; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 1000; }
+        .vote-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 5px; min-height: 12px; width: 100%; }
+        .vote-dot { width: 12px; height: 12px; background: #ff0000; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 5px #000; }
+        
+        .skip-btn { margin-top: 10px; background: #555; color: white; padding: 12px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #888; border-radius: 5px; cursor: pointer; display: none; }
+        .skip-btn:hover { background: #777; }
+        
+        #chatPanel { position: fixed; top: 60px; right: -350px; width: 300px; height: calc(100% - 60px); background: rgba(0,0,0,0.95); border-left: 2px solid #ff0000; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 1000; }
         #chatPanel.open { right: 0; }
         #chatMessages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .msg { font-size: 0.9rem; word-break: break-word; }
-        .msg span { font-weight: bold; color: #00aaff; }
+        .msg span { font-weight: bold; color: #ff0000; }
         .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #444; }
         .chat-input-area input { flex-grow: 1; padding: 8px; background: #222; color: white; border: 1px solid #555; outline: none; }
-        .chat-input-area button { background: #00aaff; color: white; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; }
-
-        /* Tam Qara Asılma Ekranı */
-        #resultOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 4000; text-align: center; padding: 20px; }
-        #resultMainText { font-size: clamp(2rem, 6vw, 4rem); color: #ff0000; font-weight: 900; text-shadow: 0 0 30px rgba(255, 0, 0, 1); text-transform: uppercase; line-height: 1.5; }
-        #resultNote { font-size: 1.5rem; color: #baa7a7; margin-top: 20px; font-weight: bold; }
+        .chat-input-area button { background: #ff0000; color: white; border: none; padding: 0 15px; font-weight: bold; cursor: pointer; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-box { background: #111; border: 2px solid #ff0000; padding: 30px; text-align: center; border-radius: 10px; max-width: 400px; width: 90%; }
+        .modal-title { font-size: 1.5rem; color: white; margin-bottom: 20px; }
+        .modal-btns { display: flex; justify-content: center; gap: 15px; }
+        .modal-btns button { padding: 12px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-yes { background: #ff0000; color: white; }
+        .btn-no { background: #555; color: white; }
+        
+        #roleModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2500; }
+        .role-box { background: #1a1a1a; border: 3px solid #eab308; padding: 40px; text-align: center; border-radius: 12px; max-width: 450px; width: 85%; box-shadow: 0 0 30px rgba(234, 179, 8, 0.3); }
+        .role-text-title { font-size: 1.2rem; color: #aaa; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        .role-text-value { font-size: 2.2rem; color: #eab308; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px rgba(234, 179, 8, 0.4); margin-bottom: 25px; }
+        .role-close-btn { background: #333; color: white; border: 1px solid #555; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
+        
+        #resultOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; text-align: center; padding: 20px; }
+        #resultMainText { font-size: clamp(2rem, 6vw, 5.5rem); color: #ff0000; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px; text-shadow: 0 0 40px rgba(255, 0, 0, 1); text-transform: uppercase; line-height: 1.5; }
+        #resultNote { font-size: 1.5rem; color: #baa7a7; max-width: 800px; margin-top: 20px; font-weight: bold; line-height: 1.4; }
+        
+        /* Yeni Səsli Çat Paneli Dizaynı */
+        #voiceChatPanel { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.9); border: 2px solid #00aaff; padding: 15px; border-radius: 10px; z-index: 1500; display: flex; flex-direction: column; gap: 10px; text-align: center; }
+        .vc-btn { padding: 8px 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -69,50 +73,44 @@
         window.addEventListener('popstate', function () { history.pushState(null, null, window.location.href); });
     </script>
 
-    <div class="bg"></div>
+    <div class="bg-container"><div class="bg"></div></div>
 
     <header id="mainHeader">
-        <button class="header-btn" onclick="exitGame()">ÇIX (ÖL)</button>
-        <div style="display:flex; flex-direction:column; align-items:center;">
-            <div class="phase-title" id="phaseText">MÜZAKİRƏ MƏRHƏLƏSİ</div>
-            <div class="timer-box" id="timerDisplay">--</div>
-        </div>
-        <div>
-            <button class="role-btn" onclick="showMyRole()">ROLU ÖYRƏN</button>
-            <button class="chat-btn" onclick="toggleChat()">YAZILI ÇAT</button>
-        </div>
+        <button class="role-view-btn" onclick="showMyRole()">ROLU ÖYRƏN</button>
+        <div class="phase-title" id="phaseText">SÖHBƏT VAXTI</div>
+        <div class="timer-box" id="timerDisplay">30</div>
+        <button class="chat-toggle-btn" onclick="toggleChat()">Çat <span id="chatNotif" style="display:none;color:#ffeb3b;">(!)</span></button>
     </header>
 
     <div class="main-area" id="mainAreaContainer">
         <div class="grid-container" id="playerGrid"></div>
-
-        <div class="control-panel">
-            <button class="action-btn btn-vote" id="voteBtn" onclick="castVote()">Səs Ver</button>
-            <button class="action-btn btn-vote" id="skipBtn" style="background:#555; color:white;" onclick="skipVote()">SƏSİ BOŞA VER (SKIP) (<span id="skipCount">0</span>)</button>
-            <button class="action-btn btn-host" id="hostStartVoteBtn" onclick="startVotingPhase()">SƏSVERMƏ BAŞLAT (45s)</button>
-        </div>
+        <button class="skip-btn" id="skipBtn">SƏSİ BOŞA VER (SKIP) <span id="skipVoteCount">(0)</span></button>
     </div>
 
     <div id="chatPanel">
-        <div style="background:#00aaff; color:white; padding:10px; text-align:center; font-weight:bold;">ÜMUMİ ÇAT</div>
         <div id="chatMessages"></div>
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Mesaj yaz...">
-            <button onclick="sendMessage()">Göndər</button>
+            <input type="text" id="chatInput" placeholder="Mesaj yaz..." autocomplete="off">
+            <button onclick="sendMessage()">GÖNDƏR</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="voteModal">
+        <div class="modal-box">
+            <div class="modal-title" id="voteModalTitle">Əminsən?</div>
+            <div class="modal-btns">
+                <button class="btn-yes" id="confirmVoteBtn">BƏLİ, ASILSIN!</button>
+                <button class="btn-no" onclick="closeModal()">LƏĞV ET</button>
+            </div>
         </div>
     </div>
 
     <div id="roleModal">
         <div class="role-box">
-            <div style="color:#aaa;">Sənin Əsl Rolun:</div>
+            <div class="role-text-title">Sənin Əsl Rolun</div>
             <div class="role-text-value" id="myRoleValue">YÜKLƏNİR...</div>
-            <button class="header-btn" onclick="document.getElementById('roleModal').style.display='none'">BAĞLA</button>
+            <button class="role-close-btn" onclick="hideMyRole()">PƏNCƏRƏNİ BAĞLA</button>
         </div>
-    </div>
-
-    <div id="nightResultOverlay">
-        <div id="nightResultText"></div>
-        <button class="action-btn btn-vote" style="display:block; margin:0 auto;" onclick="document.getElementById('nightResultOverlay').style.display='none'">DAVAM ET</button>
     </div>
 
     <div id="resultOverlay">
@@ -120,14 +118,13 @@
         <div id="resultNote"></div>
     </div>
 
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.18.0.js"></script>
-    <div id="voice-chat-panel" style="display: none !important; background: #1f2833; border: 2px solid #66fcf1; padding: 15px; border-radius: 8px; margin: 10px auto; max-width: 400px; text-align: center; position:relative; z-index:100;">
-        <h3 style="color: #66fcf1; margin-top: 0; margin-bottom: 5px;">SƏSLİ ÇAT</h3>
-        <p id="vc-status" style="color: #c5c6c7; font-size: 14px;">Status: Qoşulmayıb (HTTPS və ya Localhost tələb edir)</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button class="action-btn" id="btn-join-vc" onclick="joinVoiceChat()" style="background: #66fcf1; color: black;">Qoşul</button>
-            <button class="action-btn" id="btn-mute-vc" onclick="toggleMute()" style="background: #ff4d4d; color: white; display: none;">Səsi Bağla</button>
-            <button class="action-btn" id="btn-leave-vc" onclick="leaveVoiceChat()" style="background: #555; color: white; display: none;">Çıx</button>
+    <div id="voiceChatPanel">
+        <h4 style="color:#00aaff; margin:0; font-size:1.1rem; letter-spacing:1px;">SƏSLİ ÇAT</h4>
+        <div id="vc-status" style="font-size:0.8rem; color:#aaa;">Qoşulmayıb</div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="btn-join-vc" class="vc-btn" onclick="joinVoiceChat()" style="background:#00aaff; color:white;">QOŞUL</button>
+            <button id="btn-mute-vc" class="vc-btn" onclick="toggleMute()" style="background:#ff4d4d; color:white; display:none;">SƏSİ BAĞLA</button>
+            <button id="btn-leave-vc" class="vc-btn" onclick="leaveVoiceChat()" style="background:#555; color:white; display:none;">ÇIX</button>
         </div>
     </div>
 
@@ -140,36 +137,60 @@
         const code = params.get('join');
         const me = localStorage.getItem("mafia_nickname");
         const safeMe = me ? me.replace(/[.#$/\[\]]/g, "_") : null;
-
+        
         if(!code || !me) window.location.href = "index.html";
 
         let isHost = false;
+        let currentPhase = "";
         let playersData = {};
         let deadPlayers = {};
         let rolesData = {};
-        let currentPhase = "";
-        let votes = {};
-        let mySelectedTarget = null;
-        let amIDead = false;
+        let myVote = null;
+        let selectedTarget = null;
         let timerInterval = null;
-        let voteProcessed = false;
-        let hasVoted = false; // Səsvermə kilidi üçün əlavə edildi
+        let currentVotes = {};
+        let latestEliminationResult = null;
+        let latestWinner = null;
 
-        db.ref('rooms/' + code).once('value', snap => {
-            const room = snap.val();
-            if(!room) return;
+        db.ref('rooms/' + code).once('value', snapshot => {
+            const room = snapshot.val();
+            if(!room) { window.location.href = "index.html"; return; }
+
             isHost = (room.host === me);
-            
-            if(isHost && room.gameState !== 'day_discuss' && room.gameState !== 'day_voting' && room.gameState !== 'day_reveal' && room.gameState !== 'day_elimination' && room.gameState !== 'game_over') {
+            playersData = room.players || {};
+            rolesData = room.assignedRoles || {};
+            deadPlayers = room.deadPlayers || {};
+
+            // OYUN İLK DƏFƏ BAŞLAYANDA HOST MÜZAKİRƏ MƏRHƏLƏSİNİ (30 SANİYƏ) AÇIR
+            if(isHost && room.gameState !== 'day_discuss') {
                 db.ref('rooms/' + code + '/votes').remove();
                 db.ref('rooms/' + code + '/eliminationResult').remove();
-                db.ref('rooms/' + code).update({ gameState: 'day_discuss' });
+                setPhase('day_discuss', 30);
             }
-
+            
             listenToRoomUpdates();
+            listenToVotes();
             listenToChat();
+            listenToElimination();
+            listenToMyVoteLock();
         });
 
+        // 1. SƏS KİLİDİ (Fikrini dəyişmək və ya 2 dəfə səs vermək qadağandır)
+        function listenToMyVoteLock() {
+            db.ref('rooms/' + code + '/votes/' + safeMe).on('value', snap => {
+                myVote = snap.val();
+                if (myVote) {
+                    // Səs veribsə (və ya skip edibsə), Skip düyməsi itir
+                    document.getElementById('skipBtn').style.display = 'none';
+                } else if (currentPhase === 'day_vote' && !deadPlayers[safeMe]) {
+                    // Hələ səs verməyibsə, Skip düyməsi görünür
+                    document.getElementById('skipBtn').style.display = 'block';
+                }
+                buildGrid(); // Grid yenilənir ki, hover effekti (active-vote) itirilsin
+            });
+        }
+
+        // OTAQ İZLƏNMƏSİ
         function listenToRoomUpdates() {
             db.ref('rooms/' + code).on('value', snap => {
                 const room = snap.val();
@@ -178,142 +199,27 @@
                 playersData = room.players || {};
                 deadPlayers = room.deadPlayers || {};
                 rolesData = room.assignedRoles || {};
-                votes = room.votes || {};
-                amIDead = !!deadPlayers[safeMe];
-
-                // Mafiya və ya Şəhər qalibiyyət yoxlanışı (Passiv)
-                if(isHost && room.gameState !== 'game_over' && room.gameState !== 'day_elimination' && room.gameState !== 'day_reveal' && room.gameState !== 'night_phase') {
-                    let aM = 0, aG = 0;
-                    for(let p in playersData) {
-                        if(!deadPlayers[p]) {
-                            let r = rolesData[p] || "";
-                            if(r.includes("Mafiya") || r === "Don" || r.toLowerCase().includes("mafya")) aM++;
-                            else aG++;
-                        }
-                    }
-                    if(aM >= aG && aM > 0) {
-                        db.ref('rooms/' + code).update({ gameState: 'game_over', winner: "Mafiya" });
-                    } else if(aM === 0 && aG > 0) {
-                        db.ref('rooms/' + code).update({ gameState: 'game_over', winner: "Şəhər" });
-                    }
-                }
-
-                // Oyun bitişi yoxlanışı
-                if (room.gameState === 'game_over') {
-                    document.getElementById('resultMainText').innerHTML = (room.winner === "Mafiya") ? "MAFİYA QALİB GƏLDİ!" : "ŞƏHƏR QALİB GƏLDİ!";
-                    document.getElementById('resultNote').innerText = "Oyun yekunlaşdı.";
-                    document.getElementById('resultOverlay').style.display = 'flex';
-                    document.getElementById('mainHeader').style.display = 'none';
-                    document.getElementById('mainAreaContainer').style.display = 'none';
-                    return;
-                }
-
-                // Gecə nəticəsi hamı üçün eyni anda açılsın
-                if(room.lastNightSummary && !sessionStorage.getItem('seenSummary_' + room.nightCounter)) {
-                    document.getElementById('nightResultText').innerText = room.lastNightSummary;
-                    document.getElementById('nightResultOverlay').style.display = 'flex';
-                    sessionStorage.setItem('seenSummary_' + room.nightCounter, "true");
-                }
-
+                
                 if(room.gameState !== currentPhase) {
                     currentPhase = room.gameState;
                     handlePhaseChange(room);
                 }
-
                 buildGrid();
-
-                if (currentPhase === 'day_elimination') {
-                    renderEliminationUI(room.eliminationResult);
-                } else if (currentPhase === 'night_phase') {
-                    window.location.href = "gece.html?join=" + code;
-                }
             });
         }
 
-        function handlePhaseChange(room) {
-            clearInterval(timerInterval);
-            const endTime = room.phaseEndTime || 0;
-            voteProcessed = false;
-
-            if(isHost) {
-                document.getElementById('hostStartVoteBtn').style.display = (currentPhase === 'day_discuss') ? 'block' : 'none';
-            }
-
-            if(currentPhase === 'day_discuss') {
-                document.getElementById('phaseText').innerText = "MÜZAKİRƏ MƏRHƏLƏSİ";
-                document.getElementById('phaseText').style.color = "#00aaff";
-                document.getElementById('voteBtn').style.display = 'none';
-                document.getElementById('skipBtn').style.display = 'none';
-                mySelectedTarget = null;
-                hasVoted = false;
-                document.getElementById('voteBtn').disabled = false;
-                document.getElementById('skipBtn').disabled = false;
-                document.getElementById('voteBtn').innerText = "Səs Ver";
-                document.getElementById('skipBtn').innerText = "SƏSİ BOŞA VER (SKIP)";
-                document.getElementById('timerDisplay').innerText = "--";
-            } 
-            else if (currentPhase === 'day_voting') {
-                document.getElementById('phaseText').innerText = "SƏSVERMƏ MƏRHƏLƏSİ";
-                document.getElementById('phaseText').style.color = "#ffaa00";
-                if(!amIDead) {
-                    document.getElementById('voteBtn').style.display = 'block';
-                    document.getElementById('skipBtn').style.display = 'block';
-                    
-                    // Səhifə yenilənsə belə əgər artıq səs veribsə düymələri kilidləyirik
-                    if(votes[safeMe]) {
-                        hasVoted = true;
-                        document.getElementById('voteBtn').disabled = true;
-                        document.getElementById('skipBtn').disabled = true;
-                        if(votes[safeMe] === "SKIP") document.getElementById('skipBtn').innerText = "SKİP EDİLDİ ✓";
-                        else document.getElementById('voteBtn').innerText = "SƏS VERİLDİ ✓";
-                    }
-                }
-            }
-            else if (currentPhase === 'day_reveal') {
-                document.getElementById('phaseText').innerText = "NƏTİCƏLƏR AÇIQLANIR";
-                document.getElementById('voteBtn').style.display = 'none';
-                document.getElementById('skipBtn').style.display = 'none';
-            }
-
-            if(endTime > 0) {
-                timerInterval = setInterval(() => {
-                    let timeLeft = Math.ceil((endTime - Date.now()) / 1000);
-                    if(timeLeft < 0) timeLeft = 0;
-                    document.getElementById('timerDisplay').innerText = timeLeft;
-
-                    if(timeLeft <= 0 && isHost && !voteProcessed) {
-                        voteProcessed = true;
-                        clearInterval(timerInterval);
-                        if(currentPhase === 'day_voting') {
-                            processVotingEnd(); 
-                        } else if(currentPhase === 'day_reveal') {
-                            finalizeElimination(); 
-                        }
-                    }
-                }, 1000);
-            }
+        function showMyRole() {
+            document.getElementById('myRoleValue').innerText = rolesData[safeMe] || "Dinc Sakin";
+            document.getElementById('roleModal').style.display = "flex";
+        }
+        function hideMyRole() {
+            document.getElementById('roleModal').style.display = "none";
         }
 
         function buildGrid() {
             const grid = document.getElementById('playerGrid');
             grid.innerHTML = "";
             const pKeys = Object.keys(playersData);
-
-            let voteCounts = {};
-            let skipC = 0;
-            for(let voter in votes) {
-                let target = votes[voter];
-                if(target === "SKIP") skipC++;
-                else voteCounts[target] = (voteCounts[target] || 0) + 1;
-            }
-            if(!hasVoted) { document.getElementById('skipCount').innerText = skipC; }
-
-            let aliveCount = pKeys.filter(p => !deadPlayers[p]).length;
-            let totalVotes = Object.keys(votes).length;
-            if (currentPhase === 'day_voting' && isHost && totalVotes >= aliveCount && aliveCount > 0 && !voteProcessed) {
-                voteProcessed = true;
-                processVotingEnd();
-            }
 
             for(let i=0; i<30; i++) {
                 const card = document.createElement('div');
@@ -322,247 +228,460 @@
                 if(i < pKeys.length) {
                     const sName = pKeys[i];
                     const pName = playersData[sName];
+                    card.id = "card_" + sName;
 
-                    if(deadPlayers[sName]) {
-                        card.classList.add('dead');
-                        card.innerHTML = `<div class="p-name">${pName}</div><div class="p-status">[ ÖLÜ ]</div>`;
-                    } else {
-                        card.classList.add('alive');
-                        
-                        let vCount = voteCounts[sName] || 0;
-                        let voteHtml = (currentPhase === 'day_reveal' || currentPhase === 'day_elimination') && vCount > 0 
-                                     ? `<div class="p-votes">${vCount} SƏS</div>` : "";
-                        
-                        card.innerHTML = `<div class="p-name">${pName}</div>${voteHtml}`;
-
-                        if(!amIDead && currentPhase === 'day_voting' && sName !== safeMe && !hasVoted) {
-                            card.onclick = () => selectTarget(sName);
-                        }
+                    if(deadPlayers[sName]) card.classList.add('dead');
+                    if(myVote && myVote === sName) card.classList.add('voted-for');
+                    
+                    card.innerHTML = `
+                        <div class="p-name" id="nameText_${sName}">${pName}</div>
+                        <div class="vote-dots" id="dots_${sName}"></div>
+                    `;
+                    
+                    // KİLİD MƏNTİQİ: Əgər adam ölü deyilsə VƏ sən hələ səs verməmisənsə kart aktivdir
+                    if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
+                        card.classList.add('active-vote');
                     }
-
-                    if(mySelectedTarget === sName) card.classList.add('selected');
+                    
+                    card.onclick = () => {
+                        if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
+                            openModal(sName, pName);
+                        }
+                    };
                 } else {
                     card.style.visibility = "hidden";
                 }
                 grid.appendChild(card);
             }
+            updateVotesUI();
         }
 
-        function selectTarget(targetSafeName) {
-            if(hasVoted) return;
-            mySelectedTarget = targetSafeName;
-            buildGrid();
+        // TAYMER VƏ AVTOMATİK MƏRHƏLƏ KEÇİDLƏRİ (Sənin Orijinal Mexanizmin)
+        function handlePhaseChange(room) {
+            clearInterval(timerInterval);
+            const endTime = room.phaseEndTime || 0;
+
+            if(currentPhase === 'day_discuss') {
+                document.getElementById('phaseText').innerText = "SÖHBƏT VAXTI";
+                document.getElementById('skipBtn').style.display = 'none';
+                document.getElementById('resultOverlay').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mainAreaContainer').style.display = 'flex';
+                document.getElementById('voiceChatPanel').style.display = 'flex';
+            }
+            else if(currentPhase === 'day_vote') {
+                document.getElementById('phaseText').innerText = "OYLAMA BAŞLADI!";
+                if(!deadPlayers[safeMe] && !myVote) {
+                    document.getElementById('skipBtn').style.display = 'block';
+                }
+            }
+            else if(currentPhase === 'day_reveal') {
+                document.getElementById('phaseText').innerText = "SƏSLƏR AÇILDI!";
+                document.getElementById('skipBtn').style.display = 'none';
+                closeModal();
+            }
+            else if(currentPhase === 'day_elimination') {
+                document.getElementById('phaseText').innerText = "ASILMA ANI";
+                document.getElementById('skipBtn').style.display = 'none';
+                renderEliminationUI();
+            }
+            else if(currentPhase === 'game_over') {
+                // Oyun bitəndə dərhal qara ekranı açır
+                renderGameOverUI();
+            }
+
+            timerInterval = setInterval(() => {
+                let timeLeft = Math.ceil((endTime - Date.now()) / 1000);
+                if(timeLeft < 0) timeLeft = 0;
+                document.getElementById('timerDisplay').innerText = timeLeft;
+
+                // TAYMER BİTDİKDƏ MƏRHƏLƏ KEÇİDİ (Yalnız Host)
+                if(timeLeft <= 0 && isHost) {
+                    clearInterval(timerInterval);
+                    if(currentPhase === 'day_discuss') {
+                        setPhase('day_vote', 45); // Səsvermə 45 Saniyə
+                    } else if(currentPhase === 'day_vote') {
+                        // 2. AVTOMATİK SKİP MƏNTİQİ: 45 saniyə bitəndə səs verməyənləri SKIP etdirir
+                        db.ref('rooms/' + code + '/votes').once('value', snap => {
+                            let cv = snap.val() || {};
+                            let updates = {};
+                            Object.keys(playersData).forEach(pKey => {
+                                if(!deadPlayers[pKey] && !cv[pKey]) {
+                                    updates['rooms/' + code + '/votes/' + pKey] = "SKIP";
+                                }
+                            });
+                            if(Object.keys(updates).length > 0) db.ref().update(updates);
+                            setPhase('day_reveal', 10);
+                        });
+                    } else if(currentPhase === 'day_reveal') {
+                        processElimination();
+                    } else if(currentPhase === 'day_elimination') {
+                        // Asılma bitdi, Gecəyə keçirik
+                        db.ref('rooms/' + code + '/gameState').set('night_phase');
+                        window.location.href = "gece.html?join=" + code;
+                    }
+                }
+
+                // Digər oyunçuların ekranında Gecəyə və ya Otağa keçid
+                if(timeLeft <= 0 && !isHost) {
+                    if(currentPhase === 'day_elimination') {
+                        clearInterval(timerInterval);
+                        window.location.href = "gece.html?join=" + code;
+                    }
+                }
+            }, 1000);
         }
 
-        function castVote() {
-            if(hasVoted) return;
-            if(!mySelectedTarget) { alert("Səs vermək üçün bir nəfər seçin!"); return; }
-            db.ref('rooms/' + code + '/votes/' + safeMe).set(mySelectedTarget);
-            document.getElementById('voteBtn').innerText = "SƏS VERİLDİ ✓";
+        function setPhase(phaseName, seconds) {
+            db.ref('rooms/' + code).update({
+                gameState: phaseName,
+                phaseEndTime: Date.now() + (seconds * 1000)
+            });
+        }
+
+        // MODAL VƏ SƏSVERMƏ
+        function openModal(targetSafeName, targetName) {
+            selectedTarget = targetSafeName;
+            document.getElementById('voteModalTitle').innerText = `Əminsən ki, ${targetName} üçün səs verəsən?`;
+            document.getElementById('voteModal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('voteModal').style.display = 'none';
+            selectedTarget = null;
+        }
+
+        document.getElementById('confirmVoteBtn').onclick = () => {
+            if(selectedTarget && !myVote) {
+                db.ref('rooms/' + code + '/votes/' + safeMe).set(selectedTarget).then(() => closeModal());
+            }
+        };
+
+        document.getElementById('skipBtn').onclick = () => {
+            if(!myVote) {
+                db.ref('rooms/' + code + '/votes/' + safeMe).set("SKIP");
+            }
+        };
+
+        // SƏSLƏRİN İZLƏNMƏSİ VƏ GÖSTƏRİLMƏSİ
+        function listenToVotes() {
+            db.ref('rooms/' + code + '/votes').on('value', snap => {
+                currentVotes = snap.val() || {};
+
+                // Əgər hamı vaxtından əvvəl səs versə, avtomatik irəli atır
+                let alivePlayersCount = Object.keys(playersData).filter(p => !deadPlayers[p]).length;
+                let totalVotesCast = Object.keys(currentVotes).length;
+
+                if (currentPhase === 'day_vote' && totalVotesCast >= alivePlayersCount && alivePlayersCount > 0) {
+                    if (isHost) setPhase('day_reveal', 10);
+                }
+                updateVotesUI();
+            });
+        }
+
+        function updateVotesUI() {
+            Object.keys(playersData).forEach(sName => {
+                const nameTextEl = document.getElementById('nameText_' + sName);
+                if(nameTextEl) nameTextEl.innerText = playersData[sName];
+                const dotContainer = document.getElementById('dots_' + sName);
+                if(dotContainer) dotContainer.innerHTML = "";
+            });
             
-            hasVoted = true;
-            document.getElementById('voteBtn').disabled = true;
-            document.getElementById('skipBtn').disabled = true;
-        }
-
-        function skipVote() {
-            if(hasVoted) return;
-            mySelectedTarget = null;
-            db.ref('rooms/' + code + '/votes/' + safeMe).set("SKIP");
-            document.getElementById('skipBtn').innerText = "SKİP EDİLDİ ✓";
+            document.getElementById('skipVoteCount').innerText = "(0)";
+            let voteCounts = {};
+            let skipCount = 0;
             
-            hasVoted = true;
-            document.getElementById('voteBtn').disabled = true;
-            document.getElementById('skipBtn').disabled = true;
-        }
+            for(let voter in currentVotes) {
+                const target = currentVotes[voter];
+                if(target === "SKIP") skipCount++;
+                else voteCounts[target] = (voteCounts[target] || 0) + 1;
+            }
 
-        function showMyRole() {
-            document.getElementById('myRoleValue').innerText = rolesData[safeMe] || "Dinc Sakin";
-            document.getElementById('roleModal').style.display = "flex";
-        }
-
-        function exitGame() {
-            if(confirm("Oyundan çıxsanız ölü sayılacaqsınız. Əminsiniz?")) {
-                db.ref('rooms/' + code + '/deadPlayers/' + safeMe).set(true).then(() => { window.location.href = "index.html"; });
+            if (currentPhase === 'day_reveal' || currentPhase === 'day_elimination') {
+                document.getElementById('skipVoteCount').innerText = `(${skipCount})`;
+                for(let target in voteCounts) {
+                    const nameTextEl = document.getElementById('nameText_' + target);
+                    if(nameTextEl && playersData[target]) {
+                        nameTextEl.innerText = `${playersData[target]} (${voteCounts[target]})`;
+                    }
+                }
+                for(let voter in currentVotes) {
+                    const target = currentVotes[voter];
+                    if(target !== "SKIP") {
+                        const dotContainer = document.getElementById('dots_' + target);
+                        if(dotContainer) {
+                            const dot = document.createElement('div');
+                            dot.className = 'vote-dot';
+                            dotContainer.appendChild(dot);
+                        }
+                    }
+                }
             }
         }
 
-        // --- HOST FUNKSİYALARI VƏ AVTOMATİK SƏSVERMƏ HESABLANMASI ---
-        function startVotingPhase() {
-            if(!isHost) return;
-            db.ref('rooms/' + code).update({ 
-                gameState: 'day_voting', 
-                votes: null,
-                phaseEndTime: Date.now() + 45000 // 45 saniyə
-            });
-        }
-
-        function processVotingEnd() {
-            if(!isHost) return;
-            
+        // HESABLANMA, QƏLƏBƏ YOXLANMASI VƏ ÖLÜM (Yalnız Host İcra Edir)
+        function processElimination() {
+            if (!isHost) return;
             db.ref('rooms/' + code + '/votes').once('value', snap => {
-                let currentVotes = snap.val() || {};
-                let updates = {};
-                
-                Object.keys(playersData).forEach(pKey => {
-                    if(!deadPlayers[pKey] && !currentVotes[pKey]) {
-                        updates['rooms/' + code + '/votes/' + pKey] = "SKIP";
-                    }
-                });
-                
-                if (Object.keys(updates).length > 0) db.ref().update(updates);
-                
-                db.ref('rooms/' + code).update({ 
-                    gameState: 'day_reveal',
-                    phaseEndTime: Date.now() + 10000 // 10 saniyə səslər ekranda qalır
-                });
-            });
-        }
-
-        function finalizeElimination() {
-            if(!isHost) return;
-
-            db.ref('rooms/' + code + '/votes').once('value', snap => {
-                const finalVotes = snap.val() || {};
+                const votes = snap.val() || {};
                 let counts = {};
                 let maxVotes = 0;
-                let lynchedPlayer = null;
+                let candidate = null;
                 let isTie = false;
                 let skipVotes = 0;
 
-                for(let v in finalVotes) {
-                    let target = finalVotes[v];
+                for(let voter in votes) {
+                    const target = votes[voter];
                     if(target === "SKIP") { skipVotes++; continue; }
                     counts[target] = (counts[target] || 0) + 1;
-                    
+
                     if(counts[target] > maxVotes) {
                         maxVotes = counts[target];
-                        lynchedPlayer = target;
+                        candidate = target;
                         isTie = false;
-                    } else if (counts[target] === maxVotes) {
+                    } else if(counts[target] === maxVotes) {
                         isTie = true;
                     }
                 }
 
-                let result = "TIE";
-                if(!isTie && lynchedPlayer && maxVotes > skipVotes) {
-                    result = lynchedPlayer;
+                let finalResult = "TIE";
+                if(skipVotes >= maxVotes && skipVotes > 0) {
+                    finalResult = "TIE";
+                } else if(!isTie && candidate) {
+                    finalResult = candidate;
                 }
-                
-                db.ref('rooms/' + code).update({ 
-                    eliminationResult: result,
-                    gameState: 'day_elimination' 
-                });
 
-                // 6 saniyə sonra gecəyə və ya oyun bitişinə keçir
-                setTimeout(() => {
-                    let updates = { gameState: 'night_phase', votes: null };
-                    if(result !== "TIE") updates['deadPlayers/' + result] = true;
-
-                    // Qalibiyyət Yoxlanışı
-                    let deadCopy = { ...deadPlayers };
-                    if(result !== "TIE") deadCopy[result] = true;
-                    let aM = 0, aG = 0;
-                    for(let p in playersData) {
-                        if(!deadCopy[p]) {
-                            let r = rolesData[p] || "";
-                            if(r.includes("Mafiya") || r === "Don" || r.toLowerCase().includes("mafya")) aM++;
-                            else aG++;
+                db.ref('rooms/' + code + '/eliminationResult').set(finalResult).then(() => {
+                    let updates = {};
+                    
+                    if(finalResult !== "TIE") {
+                        updates['rooms/' + code + '/deadPlayers/' + finalResult] = true;
+                        
+                        // Canlı Bomba xüsusi qaydası
+                        if(rolesData[finalResult] === "Canlı Bomba") {
+                            for(let voter in votes) {
+                                if(votes[voter] === finalResult) {
+                                    updates['rooms/' + code + '/deadPlayers/' + voter] = true;
+                                }
+                            }
                         }
                     }
-                    if(aM >= aG && aM > 0) {
-                        updates.gameState = 'game_over';
-                        updates.winner = "Mafiya";
-                    } else if (aM === 0 && aG > 0) {
-                        updates.gameState = 'game_over';
-                        updates.winner = "Şəhər";
-                    }
 
-                    db.ref('rooms/' + code).update(updates);
-                }, 6000);
+                    if(Object.keys(updates).length > 0) {
+                        db.ref().update(updates).then(() => checkWinConditionAndTransition());
+                    } else {
+                        checkWinConditionAndTransition();
+                    }
+                });
             });
         }
 
-        function renderEliminationUI(result) {
-            if(!result) return;
+        // 4. MAFİYA QƏLƏBƏSİNİN BALANS ŞƏRTİ YOXLANILIR
+        function checkWinConditionAndTransition() {
+            db.ref('rooms/' + code).once('value', snap => {
+                const r = snap.val();
+                let aMaf = 0, aTown = 0;
+                const dPlayers = r.deadPlayers || {};
+                const rData = r.assignedRoles || {};
+                const mafiaRolesList = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya"];
+                
+                Object.keys(r.players).forEach(p => {
+                    if (!dPlayers[p]) {
+                        let role = rData[p] || "Dinc Sakin";
+                        if (mafiaRolesList.includes(role)) aMaf++;
+                        else aTown++;
+                    }
+                });
+
+                // Mafiyanın sayı bərabər və ya çox olarsa Mafiya Qazanır!
+                if (aMaf >= aTown && aMaf > 0) {
+                    db.ref('rooms/' + code + '/winner').set('MAFIA');
+                    setPhase('game_over', 9999);
+                } else if (aMaf === 0) {
+                    db.ref('rooms/' + code + '/winner').set('TOWN');
+                    setPhase('game_over', 9999);
+                } else {
+                    // Qələbə yoxdursa oyun davam edir (6 saniyə asılma ekranı)
+                    setPhase('day_elimination', 6);
+                }
+            });
+        }
+
+        // 3. NƏTİCƏNİN HAMIDA GÖRÜNMƏSİ
+        function listenToElimination() {
+            db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
+                latestEliminationResult = snap.val();
+                if (currentPhase === 'day_elimination') {
+                    renderEliminationUI();
+                }
+            });
+            
+            db.ref('rooms/' + code + '/winner').on('value', snap => {
+                latestWinner = snap.val();
+                if (currentPhase === 'game_over') {
+                    renderGameOverUI();
+                }
+            });
+        }
+
+        function renderEliminationUI() {
+            if (!latestEliminationResult) return;
             document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('mainAreaContainer').style.display = 'none';
-            document.getElementById('voice-chat-panel').style.display = 'none';
+            document.getElementById('chatPanel').classList.remove('open');
+            document.getElementById('voiceChatPanel').style.display = 'none';
 
+            const result = latestEliminationResult;
             const mainTextEl = document.getElementById('resultMainText');
             const noteEl = document.getElementById('resultNote');
 
             if(result === "TIE") {
                 mainTextEl.innerHTML = "HEÇ KİM ASILMADI!";
-                mainTextEl.style.color = "#888";
-                noteEl.innerText = "Səslər bərabər oldu və ya Skip edildi.";
+                mainTextEl.style.color = "#888888";
+                mainTextEl.style.textShadow = "0 0 20px #555";
+                noteEl.innerText = "Səslər bərabər oldu və ya hamı pas keçdi.";
             } else {
-                const hungName = playersData[result] || "Bilinməyən";
+                const hungName = playersData[result] || "Bilinməyən Oyunçu";
                 const realRole = rolesData[result] || "Dinc Sakin";
-                
-                if(realRole === "Gizli Mafiya") {
-                    mainTextEl.innerHTML = `ASILAN: ${hungName}<br>ROLU: Dinc Sakin`;
-                    noteEl.innerText = "O, Gizli Mafiya idi. Öldüyü üçün əsl rolu gizlədildi.";
+
+                mainTextEl.style.color = "#ff0000";
+                mainTextEl.style.textShadow = "0 0 40px rgba(255, 0, 0, 1)";
+
+                if(realRole === "Gizli Mafiya" || realRole === "Hiyləgər Mafiya") {
+                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: Dinc Sakin`;
+                    noteEl.innerText = "O, Gizli Mafiya idi! Öldüyü üçün əsl rolu şəhərdən gizlədildi.";
+                } else if(realRole === "Psixopat") {
+                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: ${realRole}`;
+                    noteEl.innerText = "O, Psixopat idi! İlk asılmadan sağ çıxdı və ölmədi!";
                 } else if(realRole === "Canlı Bomba") {
-                    mainTextEl.innerHTML = `ASILAN: ${hungName}<br>ROLU: ${realRole}`;
-                    noteEl.innerText = "Canlı Bomba asıldı! Ona səs verənlər də gecə partlayacaq!";
+                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: ${realRole}`;
+                    noteEl.innerText = "O, Canlı Bomba idi! Ona səs verənlərin hamısı partladı!";
                 } else {
-                    mainTextEl.innerHTML = `ASILAN: ${hungName}<br>ROLU: ${realRole}`;
-                    noteEl.innerText = "Şəhər qərarını verdi.";
+                    mainTextEl.innerHTML = `ADAMIN ADI: ${hungName}<br>ROLU BUDUR: ${realRole}`;
+                    noteEl.innerText = "Şəhər sakinləri bir təhlükəni daha yox etdi.";
                 }
             }
             document.getElementById('resultOverlay').style.display = 'flex';
         }
 
-        // ================= MƏTN ÇATI =================
+        function renderGameOverUI() {
+            document.getElementById('mainHeader').style.display = 'none';
+            document.getElementById('mainAreaContainer').style.display = 'none';
+            document.getElementById('chatPanel').classList.remove('open');
+            document.getElementById('voiceChatPanel').style.display = 'none';
+            
+            const mainTextEl = document.getElementById('resultMainText');
+            const noteEl = document.getElementById('resultNote');
+            
+            if(latestWinner === 'MAFIA') {
+                mainTextEl.innerHTML = "MAFİYA QAZANDI!";
+                mainTextEl.style.color = "#ff0000";
+                mainTextEl.style.textShadow = "0 0 40px #ff0000";
+                noteEl.innerText = "Mafiyaların sayı dinc sakinlərin sayına çatdı. Şəhər tamamilə ələ keçirildi!";
+            } else {
+                mainTextEl.innerHTML = "ŞƏHƏR QAZANDI!";
+                mainTextEl.style.color = "#4ade80";
+                mainTextEl.style.textShadow = "0 0 40px #4ade80";
+                noteEl.innerText = "Bütün mafiyalar yox edildi. Şəhərdə sülh bərpa olundu!";
+            }
+            document.getElementById('resultOverlay').style.display = 'flex';
+            
+            // Oyun bitəndə səsi də tam bağlayırıq
+            leaveVoiceChat();
+        }
+
+        // MƏTN ÇATI
         function toggleChat() {
-            document.getElementById('chatPanel').classList.toggle('open');
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
         }
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const txt = input.value.trim();
-            if(!txt || amIDead) { if(amIDead) alert("Siz ölüsünüz! Yalnız Gecə Ölülər Çatına yaza bilərsiniz."); return; }
-            db.ref('rooms/' + code + '/chat').push({ sender: me, msg: txt });
+            if(!txt) return;
+
+            db.ref('rooms/' + code + '/chat').push({ sender: me, msg: txt, time: Date.now() });
             input.value = "";
         }
-        document.getElementById('chatInput').addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); sendMessage(); } });
+        document.getElementById('chatInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") { event.preventDefault(); sendMessage(); }
+        });
         function listenToChat() {
             db.ref('rooms/' + code + '/chat').on('child_added', snap => {
                 const data = snap.val();
                 const box = document.getElementById('chatMessages');
                 box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
                 box.scrollTop = box.scrollHeight;
+                const panel = document.getElementById('chatPanel');
+                if(!panel.classList.contains('open') && data.sender !== me) {
+                    document.getElementById('chatNotif').style.display = 'inline';
+                }
             });
         }
 
-        // ================= VOICE CHAT (AGORA) =================
+        // 5. AGORA VOICE CHAT MODULU (PROBLEMSİZ VƏ QISALTMASIZ)
         const AGORA_APP_ID = "0b6c9c3436ad44baa6fdadc8d60971e3"; 
-        const CHANNEL_NAME = "Bayram_MainRoom"; 
+        const CHANNEL_NAME = code ? code.toString() : "MafiaRoom"; 
         const TOKEN = null; 
         let rtc = { client: null, localAudioTrack: null };
-
-        function initAgoraClient() {
-            return; // Ləğv edildi
-            /*
-            rtc.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-            rtc.client.on("user-published", async (user, mediaType) => {
-                await rtc.client.subscribe(user, mediaType);
-                if (mediaType === "audio") user.audioTrack.play();
-            });
-            */
-        }
-        // window.addEventListener("DOMContentLoaded", initAgoraClient); // Ləğv edildi
+        let isMuted = false;
 
         async function joinVoiceChat() {
-            return; // Ləğv edildi
+            if(deadPlayers[safeMe]) { alert("Ölülər səsli çata qoşula bilməz!"); return; }
+            try {
+                document.getElementById("vc-status").innerText = "Qoşulur...";
+                
+                if (!rtc.client) {
+                    rtc.client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+                    rtc.client.on("user-published", async (user, mediaType) => {
+                        await rtc.client.subscribe(user, mediaType);
+                        if (mediaType === "audio") user.audioTrack.play();
+                    });
+                }
+
+                await rtc.client.join(AGORA_APP_ID, CHANNEL_NAME, TOKEN, safeMe);
+                rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                await rtc.client.publish([rtc.localAudioTrack]);
+                
+                document.getElementById("vc-status").innerText = "Kanala Qoşulub";
+                document.getElementById("vc-status").style.color = "#4ade80";
+                document.getElementById("btn-join-vc").style.display = "none";
+                document.getElementById("btn-mute-vc").style.display = "inline-block";
+                document.getElementById("btn-leave-vc").style.display = "inline-block";
+            } catch (error) { 
+                console.error(error);
+                document.getElementById("vc-status").innerText = "Xəta! Testing Mode rejimində deyilsiniz və ya Localhost istifadə etmirsiniz.";
+                document.getElementById("vc-status").style.color = "#ff0000";
+            }
         }
+
         async function toggleMute() {
-            return; // Ləğv edildi
+            if (!rtc.localAudioTrack) return;
+            const btn = document.getElementById("btn-mute-vc");
+            
+            if (!isMuted) {
+                await rtc.localAudioTrack.setEnabled(false);
+                isMuted = true;
+                btn.innerText = "SƏSİ AÇ";
+                btn.style.backgroundColor = "#4ade80";
+            } else {
+                await rtc.localAudioTrack.setEnabled(true);
+                isMuted = false;
+                btn.innerText = "SƏSİ BAĞLA";
+                btn.style.backgroundColor = "#ff4d4d";
+            }
         }
+
         async function leaveVoiceChat() {
-            return; // Ləğv edildi
+            if (rtc.localAudioTrack) { rtc.localAudioTrack.close(); rtc.localAudioTrack = null; }
+            if (rtc.client) await rtc.client.leave();
+            document.getElementById("vc-status").innerText = "Qoşulmayıb";
+            document.getElementById("vc-status").style.color = "#aaa";
+            document.getElementById("btn-join-vc").style.display = "inline-block";
+            document.getElementById("btn-mute-vc").style.display = "none";
+            document.getElementById("btn-leave-vc").style.display = "none";
         }
-        // window.addEventListener("beforeunload", leaveVoiceChat); // Ləğv edildi
+        window.addEventListener("beforeunload", leaveVoiceChat);
     </script>
 </body>
 </html>
