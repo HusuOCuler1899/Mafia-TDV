@@ -62,7 +62,6 @@
         #resultMainText { font-size: clamp(2rem, 6vw, 5.5rem); color: #ff0000; font-weight: 900; letter-spacing: 3px; margin-bottom: 25px; text-shadow: 0 0 40px rgba(255, 0, 0, 1); text-transform: uppercase; line-height: 1.5; }
         #resultNote { font-size: 1.5rem; color: #baa7a7; max-width: 800px; margin-top: 20px; font-weight: bold; line-height: 1.4; }
         
-        /* Yeni Səsli Çat Paneli Dizaynı */
         #voiceChatPanel { position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.9); border: 2px solid #00aaff; padding: 15px; border-radius: 10px; z-index: 1500; display: flex; flex-direction: column; gap: 10px; text-align: center; }
         .vc-btn { padding: 8px 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; text-transform: uppercase; }
     </style>
@@ -124,7 +123,7 @@
         <div style="display:flex; gap:10px; justify-content:center;">
             <button id="btn-join-vc" class="vc-btn" onclick="joinVoiceChat()" style="background:#00aaff; color:white;">QOŞUL</button>
             <button id="btn-mute-vc" class="vc-btn" onclick="toggleMute()" style="background:#ff4d4d; color:white; display:none;">SƏSİ BAĞLA</button>
-            <button id="btn-leave-vc" class="vc-btn" onclick="leaveVoiceChat()" style="background:#555; color:white; display:none;">ÇIX</button>
+            <button id="btn-leave-vc" class="vc-btn" onclick="toggleMute()" style="background:#555; color:white; display:none;">ÇIX</button>
         </div>
     </div>
 
@@ -161,7 +160,6 @@
             rolesData = room.assignedRoles || {};
             deadPlayers = room.deadPlayers || {};
 
-            // OYUN İLK DƏFƏ BAŞLAYANDA HOST MÜZAKİRƏ MƏRHƏLƏSİNİ (30 SANİYƏ) AÇIR
             if(isHost && room.gameState !== 'day_discuss') {
                 db.ref('rooms/' + code + '/votes').remove();
                 db.ref('rooms/' + code + '/eliminationResult').remove();
@@ -175,22 +173,18 @@
             listenToMyVoteLock();
         });
 
-        // 1. SƏS KİLİDİ (Fikrini dəyişmək və ya 2 dəfə səs vermək qadağandır)
         function listenToMyVoteLock() {
             db.ref('rooms/' + code + '/votes/' + safeMe).on('value', snap => {
                 myVote = snap.val();
                 if (myVote) {
-                    // Səs veribsə (və ya skip edibsə), Skip düyməsi itir
                     document.getElementById('skipBtn').style.display = 'none';
                 } else if (currentPhase === 'day_vote' && !deadPlayers[safeMe]) {
-                    // Hələ səs verməyibsə, Skip düyməsi görünür
                     document.getElementById('skipBtn').style.display = 'block';
                 }
-                buildGrid(); // Grid yenilənir ki, hover effekti (active-vote) itirilsin
+                buildGrid();
             });
         }
 
-        // OTAQ İZLƏNMƏSİ
         function listenToRoomUpdates() {
             db.ref('rooms/' + code).on('value', snap => {
                 const room = snap.val();
@@ -238,7 +232,6 @@
                         <div class="vote-dots" id="dots_${sName}"></div>
                     `;
                     
-                    // KİLİD MƏNTİQİ: Əgər adam ölü deyilsə VƏ sən hələ səs verməmisənsə kart aktivdir
                     if(currentPhase === 'day_vote' && !deadPlayers[sName] && !deadPlayers[safeMe] && !myVote) {
                         card.classList.add('active-vote');
                     }
@@ -256,7 +249,6 @@
             updateVotesUI();
         }
 
-        // TAYMER VƏ AVTOMATİK MƏRHƏLƏ KEÇİDLƏRİ (Sənin Orijinal Mexanizmin)
         function handlePhaseChange(room) {
             clearInterval(timerInterval);
             const endTime = room.phaseEndTime || 0;
@@ -286,7 +278,6 @@
                 renderEliminationUI();
             }
             else if(currentPhase === 'game_over') {
-                // Oyun bitəndə dərhal qara ekranı açır
                 renderGameOverUI();
             }
 
@@ -295,13 +286,11 @@
                 if(timeLeft < 0) timeLeft = 0;
                 document.getElementById('timerDisplay').innerText = timeLeft;
 
-                // TAYMER BİTDİKDƏ MƏRHƏLƏ KEÇİDİ (Yalnız Host)
                 if(timeLeft <= 0 && isHost) {
                     clearInterval(timerInterval);
                     if(currentPhase === 'day_discuss') {
-                        setPhase('day_vote', 45); // Səsvermə 45 Saniyə
+                        setPhase('day_vote', 45);
                     } else if(currentPhase === 'day_vote') {
-                        // 2. AVTOMATİK SKİP MƏNTİQİ: 45 saniyə bitəndə səs verməyənləri SKIP etdirir
                         db.ref('rooms/' + code + '/votes').once('value', snap => {
                             let cv = snap.val() || {};
                             let updates = {};
@@ -316,17 +305,15 @@
                     } else if(currentPhase === 'day_reveal') {
                         processElimination();
                     } else if(currentPhase === 'day_elimination') {
-                        // Asılma bitdi, Gecəyə keçirik
                         db.ref('rooms/' + code + '/gameState').set('night_phase');
-                        window.location.href = "gece.html?join=" + code;
+                        window.location.href = `gece.html?join=${code}`;
                     }
                 }
 
-                // Digər oyunçuların ekranında Gecəyə və ya Otağa keçid
                 if(timeLeft <= 0 && !isHost) {
                     if(currentPhase === 'day_elimination') {
                         clearInterval(timerInterval);
-                        window.location.href = "gece.html?join=" + code;
+                        window.location.href = `gece.html?join=${code}`;
                     }
                 }
             }, 1000);
@@ -339,7 +326,6 @@
             });
         }
 
-        // MODAL VƏ SƏSVERMƏ
         function openModal(targetSafeName, targetName) {
             selectedTarget = targetSafeName;
             document.getElementById('voteModalTitle').innerText = `Əminsən ki, ${targetName} üçün səs verəsən?`;
@@ -362,12 +348,9 @@
             }
         };
 
-        // SƏSLƏRİN İZLƏNMƏSİ VƏ GÖSTƏRİLMƏSİ
         function listenToVotes() {
             db.ref('rooms/' + code + '/votes').on('value', snap => {
                 currentVotes = snap.val() || {};
-
-                // Əgər hamı vaxtından əvvəl səs versə, avtomatik irəli atır
                 let alivePlayersCount = Object.keys(playersData).filter(p => !deadPlayers[p]).length;
                 let totalVotesCast = Object.keys(currentVotes).length;
 
@@ -418,7 +401,6 @@
             }
         }
 
-        // HESABLANMA, QƏLƏBƏ YOXLANMASI VƏ ÖLÜM (Yalnız Host İcra Edir)
         function processElimination() {
             if (!isHost) return;
             db.ref('rooms/' + code + '/votes').once('value', snap => {
@@ -455,8 +437,6 @@
                     
                     if(finalResult !== "TIE") {
                         updates['rooms/' + code + '/deadPlayers/' + finalResult] = true;
-                        
-                        // Canlı Bomba xüsusi qaydası
                         if(rolesData[finalResult] === "Canlı Bomba") {
                             for(let voter in votes) {
                                 if(votes[voter] === finalResult) {
@@ -475,7 +455,6 @@
             });
         }
 
-        // 4. MAFİYA QƏLƏBƏSİNİN BALANS ŞƏRTİ YOXLANILIR
         function checkWinConditionAndTransition() {
             db.ref('rooms/' + code).once('value', snap => {
                 const r = snap.val();
@@ -492,7 +471,6 @@
                     }
                 });
 
-                // Mafiyanın sayı bərabər və ya çox olarsa Mafiya Qazanır!
                 if (aMaf >= aTown && aMaf > 0) {
                     db.ref('rooms/' + code + '/winner').set('MAFIA');
                     setPhase('game_over', 9999);
@@ -500,13 +478,11 @@
                     db.ref('rooms/' + code + '/winner').set('TOWN');
                     setPhase('game_over', 9999);
                 } else {
-                    // Qələbə yoxdursa oyun davam edir (6 saniyə asılma ekranı)
                     setPhase('day_elimination', 6);
                 }
             });
         }
 
-        // 3. NƏTİCƏNİN HAMIDA GÖRÜNMƏSİ
         function listenToElimination() {
             db.ref('rooms/' + code + '/eliminationResult').on('value', snap => {
                 latestEliminationResult = snap.val();
@@ -585,14 +561,12 @@
             }
             document.getElementById('resultOverlay').style.display = 'flex';
             
-            // Oyun bitəndə Firebase listener-ləri sıfırlayırıq və səsi bağlayırıq
             db.ref('rooms/' + code).off();
             db.ref('rooms/' + code + '/votes').off();
             db.ref('rooms/' + code + '/chat').off();
             leaveVoiceChat();
         }
 
-        // MƏTN ÇATI
         function toggleChat() {
             const panel = document.getElementById('chatPanel');
             panel.classList.toggle('open');
@@ -622,7 +596,6 @@
             });
         }
 
-        // 5. AGORA VOICE CHAT MODULU (PROBLEMSİZ VƏ QISALTMASIZ)
         const AGORA_APP_ID = "0b6c9c3436ad44baa6fdadc8d60971e3"; 
         const CHANNEL_NAME = code ? code.toString() : "MafiaRoom"; 
         const TOKEN = null; 
