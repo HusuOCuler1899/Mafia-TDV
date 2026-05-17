@@ -7,36 +7,37 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
         body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow-x: hidden; }
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.3); }
 
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0, 100, 255, 0.2); border-bottom: 2px solid #0055ff; }
-        .room-code { font-size: 1.5rem; color: #45f3ff; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #45f3ff; }
-        .btn-header { background: #ff0000; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; }
+        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; }
 
-        .container { margin: 40px auto; width: 95%; max-width: 1000px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; border-radius: 10px; box-shadow: 0 0 20px rgba(255,0,0,0.2); text-align: center; }
+        .container { margin: 80px auto; width: 95%; max-width: 1000px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.2); text-align: center; }
         h1, h2 { color: #ff0000; text-transform: uppercase; margin-bottom: 20px; }
 
         .setup-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; }
-        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; flex: 1; min-width: 250px; text-align: center; outline: none; border-radius: 5px; }
+        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; flex: 1; min-width: 250px; text-align: center; outline: none; }
         .range-box { flex: 1; min-width: 200px; text-align: center; }
         input[type="range"] { width: 100%; accent-color: #ff0000; }
         
-        .btn { padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; border-radius: 5px; }
+        .btn { padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn:hover { background: #ff0000; color: white; }
-        .btn-start { background: #00ff00; color: black; border: none; box-shadow: 0 0 15px #00ff00; }
 
+        /* 5x6 CƏDVƏL SİSTEMİ */
         .main-area { display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; margin-top: 10px; }
-        .player-card { background: rgba(0,0,0,0.7); border: 2px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; color: #555; }
+        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; margin-top: 20px; }
+        .player-card { background: rgba(0,0,0,0.7); border: 2px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; color: #555; position: relative; }
         .player-card.filled { border-color: #00ff00; color: white; background: rgba(0, 255, 0, 0.1); box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
         .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
-        .host-tag { color: #4ade80; font-size: 0.7rem; border: 1px solid #4ade80; padding: 2px 5px; font-weight: bold; margin-bottom: 5px; background: #000; border-radius: 3px; }
+        .host-tag { color: #4ade80; font-size: 0.7rem; border: 1px solid #4ade80; padding: 2px 5px; font-weight: bold; position: absolute; top: 5px; right: 5px; background: #000; }
 
         #timerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         #countdownText { font-size: 8rem; color: #ff0000; text-shadow: 0 0 30px #ff0000; margin-bottom: 20px; }
+        .timer-info { color: white; font-size: 1.2rem; max-width: 80%; margin-bottom: 30px; }
+        
+        .header-btn { background: #555; color: white; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -46,22 +47,18 @@
     </script>
 
     <div class="bg-container"><div class="bg"></div></div>
+    <div id="codeTag" style="display:none;"></div>
     
-    <header id="headerBar" style="display:none;">
-        <button class="btn-header" onclick="leaveRoom()">GERİ / ÇIX</button>
-        <div class="room-code" id="roomCodeDisplay">KOD: ----</div>
-        <div style="width: 80px;"></div>
-    </header>
-
     <div id="timerOverlay">
         <h1 id="countdownText">5</h1>
-        <p style="color: white; font-size: 1.2rem;">OYUN BAŞLAYIR...</p>
-        <button type="button" class="btn" style="border-color:#fff; color:#fff; margin-top:20px;" onclick="leaveRoom()">LƏĞV ET / ÇIX</button>
+        <p class="timer-info">OYUN BAŞLAYIR...<br><span style="color:#ff4444; font-size:0.9rem;">(Kimsə çıxsa sayım dayanacaq)</span></p>
+        <button type="button" class="btn" style="border-color:#fff; color:#fff;" id="cancelBtn" onclick="leaveRoom()">LƏĞV ET / ÇIX</button>
     </div>
 
     <div id="setupArea" class="container">
-        <button class="btn-header" style="float:left; background:#555;" onclick="window.location.href='index.html'">GERİ</button>
-        <h1 style="clear:both;">OTAQ AYARLARI</h1>
+        <button class="header-btn" style="float:left;" onclick="window.location.href='index.html'">GERİ QAYIT</button>
+        <div style="clear:both;"></div>
+        <h1>OTAQ AYARLARI</h1>
         <div class="setup-row">
             <input type="text" id="roomNameInp" placeholder="OTAQ ADI">
             <div class="range-box">
@@ -72,14 +69,18 @@
         </div>
     </div>
 
-    <div id="lobbyArea" class="main-area" style="display:none;">
-        <h2 id="roomTitle" style="color: white; margin-top: 10px;"></h2>
-        <h3 style="color: #4ade80; margin-bottom: 10px;">Oyunçular: <span id="playerCount">0/0</span></h3>
+    <div id="lobbyArea" class="container" style="display:none; max-width: 1100px;">
+        <button class="header-btn" style="float:left;" onclick="leaveRoom()">OTAQDAN ÇIX</button>
+        <div style="clear:both;"></div>
+        <h2 id="roomTitle"></h2>
+        <h3 style="color: #4ade80;">Oyunçular: <span id="playerCount">0</span> / <span id="maxLimitText">30</span></h3>
         
-        <div class="grid-container" id="lobbyGrid"></div>
-        
-        <div style="margin-top: 20px; text-align: center;">
-            <button type="button" class="btn btn-start" id="startGameBtn" style="display:none;">OYUNU BAŞLAT</button>
+        <div class="main-area">
+            <div class="grid-container" id="lobbyGrid"></div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button type="button" class="btn" id="startGameBtn" style="display:none; background:#00ff00; color:black; border:none; box-shadow:0 0 15px #00ff00;">OYUNU BAŞLAT</button>
             <p id="statusText" style="color: #aaa; margin-top: 10px;">Hostun oyunu başlatması gözlənilir...</p>
         </div>
     </div>
@@ -92,15 +93,16 @@
         const params = new URLSearchParams(window.location.search);
         const code = params.get('join');
         const me = localStorage.getItem("mafia_nickname");
-        const safeMe = me ? me.replace(/[.#$/\[\]]/g, "_") : null;
-
         if(!me) window.location.href = "index.html";
+        const safeMe = me.replace(/[.#$/\[\]]/g, "_");
 
         let isHost = false;
-        let playersData = {};
-        let maxPlayersLimit = 5;
+        let localPlayerCount = 0;
         let countdownInt = null;
+        let playersData = {};
+        let maxLimit = 30;
 
+        // Oyunçu sayına görə unikal rolların tam siyahısı
         const poolByCount = {
             5: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"],
             6: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen", "Hakim"],
@@ -131,14 +133,21 @@
         };
 
         function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
             }
             return array;
         }
 
         document.getElementById("limitRange").oninput = function() { document.getElementById("limitVal").innerText = this.value; };
+
+        function leaveRoom() {
+            if(!code) { location.href = 'index.html'; return; }
+            db.ref('rooms/' + code + '/players/' + safeMe).remove().then(() => { location.href = 'index.html'; });
+        }
 
         if(!code) {
             document.getElementById("startBtn").onclick = function() {
@@ -153,9 +162,9 @@
             };
         } else {
             document.getElementById("setupArea").style.display = "none";
-            document.getElementById("headerBar").style.display = "flex";
-            document.getElementById("lobbyArea").style.display = "flex";
-            document.getElementById('roomCodeDisplay').innerText = `KOD: ${code}`;
+            document.getElementById("lobbyArea").style.display = "block";
+            document.getElementById("codeTag").innerText = "KOD: " + code;
+            document.getElementById("codeTag").style.display = "block";
             
             db.ref('rooms/' + code + '/players/' + safeMe).set(me);
             listenToRoom();
@@ -168,16 +177,21 @@
 
                 isHost = (me === room.host);
                 playersData = room.players || {};
-                maxPlayersLimit = room.maxPlayers || 30;
-                
+                maxLimit = room.maxPlayers || 30;
                 const pKeys = Object.keys(playersData);
-                document.getElementById('playerCount').innerText = `${pKeys.length} / ${maxPlayersLimit}`;
-                document.getElementById("roomTitle").innerText = room.roomName;
                 
+                document.getElementById('playerCount').innerText = pKeys.length;
+                document.getElementById('maxLimitText').innerText = maxLimit;
+                document.getElementById("roomTitle").innerText = room.roomName;
                 document.getElementById("startGameBtn").style.display = isHost ? "inline-block" : "none";
                 document.getElementById("statusText").style.display = isHost ? "none" : "block";
 
                 buildGrid(pKeys, room.host);
+
+                if (room.gameState === 'countdown' && localPlayerCount > 0 && pKeys.length !== localPlayerCount) {
+                    if (isHost) db.ref('rooms/' + code + '/gameState').set('waiting');
+                }
+                localPlayerCount = pKeys.length;
 
                 if (room.gameState === 'countdown') {
                     document.getElementById('timerOverlay').style.display = 'flex';
@@ -214,10 +228,12 @@
                     const pName = playersData[playerKeys[i]];
                     card.classList.add('filled');
                     card.innerHTML = `${pName === hostName ? '<div class="host-tag">HOST</div>' : ''}<div class="p-name">${pName}</div>`;
-                } else if (i < maxPlayersLimit) {
-                    card.innerHTML = `<div class="p-name" style="color:#444;">Boş</div>`;
+                } else if (i < maxLimit) {
+                    card.innerHTML = `<div class="p-name" style="color:#555;">BOŞ</div>`;
                 } else {
-                    card.innerHTML = `<div class="p-name" style="color:#222;">Qapalı</div>`;
+                    card.innerHTML = `<div class="p-name" style="color:#222;">QAPALI</div>`;
+                    card.style.borderColor = "#111";
+                    card.style.background = "rgba(0,0,0,0.9)";
                 }
                 grid.appendChild(card);
             }
@@ -225,28 +241,18 @@
 
         document.getElementById("startGameBtn").onclick = function() {
             const pKeys = Object.keys(playersData);
-            if(pKeys.length < 3) { alert("Oyun üçün ən az 3 nəfər lazımdır!"); return; }
+            if(pKeys.length < 3) { alert("Başlamaq üçün ən az 3 oyunçu lazımdır!"); return; }
             db.ref('rooms/' + code + '/gameState').set('countdown');
         };
 
         function assignRolesAndStart(players) {
             const pCount = players.length;
             let selectedPool = (pCount >= 5 && pCount <= 30) ? [...poolByCount[pCount]] : ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"];
-            
             const shuffledRoles = shuffle(selectedPool);
             let assigned = {};
             
-            players.forEach((pKey, index) => {
-                assigned[pKey] = shuffledRoles[index] || "Dinc Sakin";
-            });
-
+            players.forEach((pKey, index) => { assigned[pKey] = shuffledRoles[index] || "Dinc Sakin"; });
             db.ref('rooms/' + code).update({ gameState: 'opening', assignedRoles: assigned });
-        }
-
-        function leaveRoom() {
-            db.ref('rooms/' + code + '/players/' + safeMe).remove().then(() => {
-                location.href = 'index.html';
-            });
         }
     </script>
 </body>
