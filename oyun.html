@@ -120,7 +120,6 @@
             if(!room) return;
             isHost = (room.host === me);
             
-            // Əgər Hostdursa, faza day_discuss olaraq başlayır
             if(isHost && room.gameState !== 'day_discuss') {
                 db.ref('rooms/' + code + '/votes').remove();
                 db.ref('rooms/' + code + '/eliminationResult').remove();
@@ -144,12 +143,9 @@
                 updateUI();
                 buildGrid();
 
-                // Sinxron Asılma Ekranı Keçidi
                 if (currentPhase === 'day_elimination') {
                     renderEliminationUI(room.eliminationResult);
-                } 
-                // Gecəyə Keçid
-                else if (currentPhase === 'night_phase') {
+                } else if (currentPhase === 'night_phase') {
                     window.location.href = "gece.html?join=" + code;
                 }
             });
@@ -267,7 +263,6 @@
                     gameState: 'day_elimination' 
                 });
 
-                // Host da o biri adamlar kimi asılma ekranını görəcək. 5 saniyə sonra gecəyə atacaq
                 setTimeout(() => {
                     let updates = { gameState: 'night_phase', votes: null };
                     if(finalResult !== "TIE") updates['deadPlayers/' + finalResult] = true;
@@ -294,11 +289,10 @@
                 const realRole = rolesData[result] || "Dinc Sakin";
                 mainTextEl.innerHTML = `ASILAN: ${hungName}<br>ROLU: ${realRole}`;
                 
-                // Gizli Mafiya Məntiqi [cite: 359]
                 if(realRole === "Gizli Mafiya") {
                     mainTextEl.innerHTML = `ASILAN: ${hungName}<br>ROLU: Dinc Sakin`;
                     noteEl.innerText = "O, Gizli Mafiya idi. Öldüyü üçün əsl rolu şəhərdən gizlədildi.";
-                } else if(realRole === "Canlı Bomba") { // Canlı Bomba Məntiqi [cite: 382]
+                } else if(realRole === "Canlı Bomba") {
                     noteEl.innerText = "Canlı Bomba asıldı! Ona səs verənlər də partlayacaq!";
                 } else {
                     noteEl.innerText = "Şəhər qərarını verdi.";
@@ -311,6 +305,7 @@
         const AGORA_APP_ID = "0b6c9c3436ad44baa6fdadc8d60971e3"; 
         const CHANNEL_NAME = "Bayram_MainRoom"; 
         const TOKEN = null; 
+        let rtc = { client: null, localAudioTrack: null };
         let isMuted = false;
 
         function initAgoraClient() {
