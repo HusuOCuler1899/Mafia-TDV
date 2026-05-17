@@ -266,7 +266,7 @@
     
     <div id="timerOverlay">
         <h1 id="countdownText">5</h1>
-        <p class="timer-info">OYUN BAŞLAYIR...<br><span style="color:#ff4444; font-size:0.9rem;">(Kimsə çıxsa sayım dayanacaq)</span></p>
+        <p class="timer-info">OYUN BAŞLAYIR...<br><span style="color:#ff4444; font-size:0.9rem;">(Kimsə çıxsa sayım dayanacak)</span></p>
         <button type="button" class="btn" style="border-color:#fff; color:#fff; max-width:200px;" id="cancelBtn">LƏĞV ET / ÇIX</button>
     </div>
     
@@ -457,33 +457,42 @@
         function assignRolesAndOpen(roomCode, playersObj) {
             const pKeys = Object.keys(playersObj);
             const pCount = pKeys.length;
-            let rolesPool = [];
+            
+            // Sənin sənədindəki dəqiq və unikal 30 rolun tam ardıcıl siyahısı
+            const masterList = [
+                "Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", 
+                "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", 
+                "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", 
+                "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", 
+                "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", 
+                "Hakim", "Nəzarətçi", "Medyum", "Xəbərçi", "Gizli Mafiya"
+            ];
 
+            let rolesPool = [];
+            
+            // 2 nəfərlik test və ya minimal oyun üçün xüsusi tarazlıq balansı
             if (pCount === 2) {
-                rolesPool = ["Sadə Mafiya", "Dinc Sakin"];
+                rolesPool = ["Sadə Mafiya", "Həkim"];
             } else if (pCount === 3) {
-                rolesPool = ["Sadə Mafiya", "Dinc Sakin", "Həkim"];
-            } else if (pCount === 4) {
-                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim"];
-            } else if (pCount === 5) {
-                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim", "Detektiv"];
+                rolesPool = ["Sadə Mafiya", "Həkim", "Detektiv"];
             } else {
-                const masterList = ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"];
-                for (let i = 0; i < pCount; i++) { 
-                    rolesPool.push(masterList[i] || "Dinc Sakin"); 
+                // Oyunçu sayı neçədirsə, masterList ardıcıllığından tam o qədər fərqli rol kəsilir (hərəsindən 1 dənə)
+                for (let i = 0; i < pCount; i++) {
+                    if (masterList[i]) {
+                        rolesPool.push(masterList[i]);
+                    } else {
+                        rolesPool.push("Dinc Sakin");
+                    }
                 }
             }
 
-            const mafiaTeamRoles = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya"];
-            if (!rolesPool.some(role => mafiaTeamRoles.includes(role))) { 
-                rolesPool[0] = "Sadə Mafiya"; 
-            }
-
+            // Rolları tamamilə qarışdırırıq ki, hamıya təsadüfi paylansın
             for (let i = rolesPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [rolesPool[i], rolesPool[j]] = [rolesPool[j], rolesPool[i]];
             }
 
+            // Qarışdırılmış unikal rolları oyunçuların ID-lərinə mənsub edirik
             let finalAssignedRoles = {};
             pKeys.forEach((key, index) => { 
                 finalAssignedRoles[key] = rolesPool[index]; 
