@@ -585,7 +585,10 @@
             }
             document.getElementById('resultOverlay').style.display = 'flex';
             
-            // Oyun bitəndə səsi də tam bağlayırıq
+            // Oyun bitəndə Firebase listener-ləri sıfırlayırıq və səsi bağlayırıq
+            db.ref('rooms/' + code).off();
+            db.ref('rooms/' + code + '/votes').off();
+            db.ref('rooms/' + code + '/chat').off();
             leaveVoiceChat();
         }
 
@@ -650,8 +653,11 @@
                 document.getElementById("btn-leave-vc").style.display = "inline-block";
             } catch (error) { 
                 console.error(error);
-                document.getElementById("vc-status").innerText = "Xəta! Testing Mode rejimində deyilsiniz və ya Localhost istifadə etmirsiniz.";
+                document.getElementById("vc-status").innerText = "Qoşulmadı! Testing Mode aktiv deyil və ya local deyil.";
                 document.getElementById("vc-status").style.color = "#ff0000";
+                document.getElementById("btn-join-vc").style.display = "inline-block";
+                document.getElementById("btn-mute-vc").style.display = "none";
+                document.getElementById("btn-leave-vc").style.display = "none";
             }
         }
 
