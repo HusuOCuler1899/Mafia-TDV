@@ -28,7 +28,6 @@
         .btn:hover { background: #ff0000; color: white; }
         .btn-start { background: #00ff00; color: black; border: none; box-shadow: 0 0 15px #00ff00; }
 
-        /* 5x6 CƏDVƏL */
         .main-area { display: flex; flex-direction: column; align-items: center; padding: 10px; }
         .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; margin-top: 10px; }
         .player-card { background: rgba(0,0,0,0.7); border: 2px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; color: #555; }
@@ -51,7 +50,8 @@
     <header id="headerBar" style="display:none;">
         <button class="btn-header" onclick="leaveRoom()">GERİ / ÇIX</button>
         <div class="room-code" id="roomCodeDisplay">KOD: ----</div>
-        <div style="width: 80px;"></div> </header>
+        <div style="width: 80px;"></div>
+    </header>
 
     <div id="timerOverlay">
         <h1 id="countdownText">5</h1>
@@ -101,7 +101,6 @@
         let maxPlayersLimit = 5;
         let countdownInt = null;
 
-        // Rolların Həqiqi Bölgüsü (Hər roldan tam 1 dənə düşməsi sənədə əsasən təmin edilir)
         const poolByCount = {
             5: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"],
             6: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen", "Hakim"],
@@ -141,7 +140,6 @@
 
         document.getElementById("limitRange").oninput = function() { document.getElementById("limitVal").innerText = this.value; };
 
-        // Otaq Yaratma
         if(!code) {
             document.getElementById("startBtn").onclick = function() {
                 const name = document.getElementById("roomNameInp").value.trim();
@@ -154,7 +152,6 @@
                 }).then(() => { location.href = "yarat.html?join=" + newCode; });
             };
         } else {
-            // Otağa Qoşulma
             document.getElementById("setupArea").style.display = "none";
             document.getElementById("headerBar").style.display = "flex";
             document.getElementById("lobbyArea").style.display = "flex";
@@ -205,7 +202,6 @@
             });
         }
 
-        // Cədvəlin qurulması
         function buildGrid(playerKeys, hostName) {
             const grid = document.getElementById('lobbyGrid');
             grid.innerHTML = "";
@@ -227,7 +223,6 @@
             }
         }
 
-        // Host Oyunu Başlatdıqda Tam 1 Dənə Unikal Rol Paylayır
         document.getElementById("startGameBtn").onclick = function() {
             const pKeys = Object.keys(playersData);
             if(pKeys.length < 3) { alert("Oyun üçün ən az 3 nəfər lazımdır!"); return; }
