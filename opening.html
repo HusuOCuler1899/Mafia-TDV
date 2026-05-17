@@ -11,14 +11,13 @@
         body, html { height: 100%; background-color: #000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.2); z-index: -1; }
         
-        /* Geri/Çıx düyməsi */
         .exit-btn { position: fixed; top: 15px; left: 15px; background: #ff0000; color: white; border: none; padding: 10px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; z-index: 100; }
 
         .envelope-container { text-align: center; background: rgba(0,0,0,0.8); padding: 40px; border-radius: 15px; border: 2px solid #ffaa00; box-shadow: 0 0 20px rgba(255, 170, 0, 0.5); z-index: 10; width: 90%; max-width: 800px; }
         .title { font-size: 1.5rem; margin-bottom: 20px; color: #ffaa00; text-transform: uppercase; letter-spacing: 2px; }
         
         #roleReveal { font-size: clamp(2rem, 6vw, 4rem); font-weight: bold; color: #ff0000; display: none; text-shadow: 0 0 15px red; margin: 20px 0; text-transform: uppercase; }
-        #roleNote { font-size: 1.2rem; color: #ddd; display: none; margin-top: 15px; padding: 10px; border-left: 3px solid red; background: rgba(255,0,0,0.1); }
+        #roleNote { font-size: 1.2rem; color: #ddd; display: none; margin-top: 15px; padding: 10px; border-left: 3px solid red; background: rgba(255,0,0,0.1); line-height: 1.5; }
         
         button.action-btn { padding: 15px 40px; font-size: 1.2rem; font-weight: bold; background: #ffaa00; color: black; border: none; border-radius: 8px; cursor: pointer; transition: 0.3s; }
         button.action-btn:hover { background: #ffcc00; transform: scale(1.05); }
@@ -61,14 +60,38 @@
         let isHost = false;
         let myRole = "Dinc Sakin";
 
-        // Sənəddəki bütün rolların xüsusi notları
+        // Bütün 30 Rolun Orijinal Təsvirləri (Qısaltmasız)
         const roleNotes = {
-            "Sadə Mafiya": "Gecələr Mafiya komandası ilə birlikdə səs verərək 1 nəfəri öldürən əsas silahlı qüvvə.",
-            "Don": "Mafiyanın rəhbəri. Xəfiyyələr tərəfindən yoxlanıldıqda həmişə günahsız 'Dinc sakin' olaraq görünür.",
-            "Vəkil": "Hər gecə bir mafiya üzvünü seçərək onu həm digər qatillərdən, həm də Keşişin yoxlamalarından qoruyan müdafiəçi.",
-            "Həkim": "Gecələr qatillərin hücumuna məruz qalanları həyata qaytaran və ölümdən xilas edən tibb işçisi.",
-            "Detektiv": "Gecə yoxlama apararaq kiminsə rolunu öyrənə bilən və ya istəsə, silahını istifadə edib kimisə vura bilən polis."
-            // Qeyd: Sənəddəki digər rolların notlarını da buraya eyni formatda uzada bilərsən. Yüngül olması üçün qısa versiya qoydum.
+            "Sadə Mafiya": "Gecələr Mafiya komandası ilə birlikdə səs verərək 1 nəfəri öldürən əsas silahlı qüvvə:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Don": "Mafiyanın rəhbəri. Xəfiyyələr tərəfindən yoxlanıldıqda həmişə günahsız 'Dinc sakin' olaraq görünür:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Vəkil": "Hər gecə bir mafiya üzvünü seçərək onu həm digər qatillərdən, həm də Keşişin yoxlamalarından qoruyan müdafiəçi:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Aypara": "Ölərsə mafiyaya əlavə atəş haqqı (bir gecədə 2 qətl) qazandıran, özünü şəhərə dinc sakin kimi göstərən fədakar mafiya:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə (özü ölsə belə komandası qazananda) qalib gəlir.",
+            "Xəfiyyə Mafiya": "Gecələr gizlicə oyanıb istədiyi 1 dinc sakinin dəqiq rolunu öyrənən məlumat toplayıcısı:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Hiyləgər Mafiya": "Gecə bir nəfəri seçərək onun xüsusi gücünün hədəfini başqa birinə yönləndirən manipulyator:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə qalib gəlir.",
+            "Gizli Mafiya": "Oyunda səsvermə və ya qatillər tərəfindən öldürüldükdə rolu şəhərə 'Dinc sakin' kimi elan edilən və xaos yaradan mafiya:Şəhər komandasını və bütün Müstəqil qatilləri tamamilə oyundan çıxarıb, Mafiyanın sayını sağ qalan dinc sakinlərin sayına bərabər və ya onlardan çox etdikdə (özü ölsə belə komandası qazananda) qalib gəlir.",
+            "Bələdiyyə Sədri": "Gündüz səsverməsində rolunu elan etdikdən sonra səsi həmişə 3 səs olaq hesablanan rəsmi lider:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Jurnalist": "Gecə iki fərqli şəxsi seçib, onların eyni, yoxsa fərqli komandalarda olduğunu öyrənən xəfiyyə:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Keşiş": "Hər gecə 1 nəfəri yoxlayıb onun dəqiq rolunun nə olduğunu öyrənən ruhani lider:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Hakim": "Gündüz səsverməsində hər hansı bir oyunçunu (oyunda yalnız 1 dəfə) edam olunmaqdan xilas edə bilən şəxs:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Türmə rəisi": "Gündüz bir şübhəlini zindana atan, səsvermə hüququnu əlindən alan və gecə onu dindirib istəsə edam edən vəzifəli:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Cismani mühafizəçi": "Gecə bir hədəfi qoruyan, hədəfə hücum olarsa, onun yerinə özünü fəda edərək ölən qoruyucu:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə (özü ölsə belə şəhər qazananda) qalib gəlir.",
+            "Həkim": "Gecələr qatillərin hücumuna məruz qalanları həyata qaytaran və ölümdən xilas edən tibb işçisi:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Detektiv": "Gecə yoxlama apararaq kiminsə rolunu öyrənə bilən və ya istəsə, silahını istifadə edib kimisə vura bilən polis:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Xəbərçi": "Əslində dinc sakin olan, lakin yoxlanıldıqda sistemdə 'Mafiya' kimi görünərək xəfiyyələri çaşdıran şəxs:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Yaddaşsız": "Oyuna heç bir rolu olmadan başlayan, lakin ilk ölən xüsusi rollu şəxsin rolunu mənimsəyib onun yerinə keçən oyunçu:Mənimsədiyi ilk rol hansı komandaya (Şəhər və ya Mafiya) aiddirsə, oyunun sonunda həmin komandanın qələbə şərtini yerinə yetirdikdə qalib gəlir.",
+            "Gözəlçə": "Gecə seçdiyi adamın qabiliyyətindən istifadə etməsinə mane olan, ancaq eyni zamanda onu bütün ölümlərdən də qoruyan rol:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Eros": "İlk gecə iki nəfəri seçib onları bir-birinə aşiq edərək gizli komanda (Aşiqlər) yaradan sevgi tərəfdarı:Oyun boyu gizlicə qoruduğu Aşiqlər cütlüyünü oyunun sonuna qədər sağ saxlaya bildikdə və ya Şəhər komandası ilə birlikdə düşmənləri tamamilə yox etdikdə qalib gəlir.",
+            "Aşiqlər": "Erosun seçdiyi cütlük. Rollarından asılı olmayaraq, biri öldüyü an digəri də kədərdən anında ölür:Oyunun ən son mərhələsinə qədər hər ikisi sağ qalmalı və yerdə qalan bütün digər oyunçuları (Şəhər, Mafiya, Müstəqillər) səsvermə və ya öz gizli rollarının gücü ilə oyundan çıxarıb tək qaldıqda qalib gəlirlər.",
+            "Fenomen": "Gecə öldürüldüyü təqdirdə, onu kimin (hansı rolun) öldürdüyünü bütün şəhərə ifşa edən məşhur:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Gizli Polis": "Passiv roldur. Mafiya onu gecə öldürməyə gələndə, hazırlıqlı olduğu üçün hücum edən mafiyanı vurub öldürür:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Medyum": "Hər gecə ölülərin ruhu ilə əlaqə qurub, keçmiş günlərdə baş verənlərlə bağlı faydalı bir ipucu alan şəxs:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Nəzarətçi": "Gecə bir evə pusqu quran və o evə həmin gecə kimlərin (hansı oyunçuların) gəlib-getdiyini görən müşahidəçi:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Fedai": "Seçdiyi adamı qoruyan, lakin Cismani mühafizəçidən fərqli olaraq özü ölməyən, hücum edəni geri püskürdüb yaralayan qoruyucu:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Qan Qardaşı": "İlk gecə lənətlədiyi iki nəfər səsvermədə bir-birinə səs verdiyi an hər ikisini birdən öldürən cadugər:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə qalib gəlir.",
+            "Oğru": "Gecə hədəfini həm xüsusi qabiliyyətini istifadə etməkdən, həm də səhəri gün səsvermə hüququndan məhrum edən fırıldaqçı:Oyunun sonuna qədər sağ qalmalı və bütün Mafiyanı, Şəhər komandasını və digər qatilləri tamamilə oyundan çıxararaq oyunda təkbaşına və ya sağ qalan digər Müstəqil rolla qaldıqda qalib gəlir.",
+            "Zəhərləyici": "Qurbanını gizlicə zəhərləyən və dərhal deyil, düz bir gecə sonra ölməsinə səbəb olan müstəqil qatil:Oyunun sonuna qədər sağ qalmalı və həm Mafiyanı, həm də bütün Şəhər sakinlərini zəhərləyərək və ya səsvermədə asaraq tamamilə yox edib təkbaşına sağ qaldıqda qalib gəlir.",
+            "Psixopat": "Çox dözümlü qatildir. Ölməsi (yaxud gündüz asılması) üçün ardıcıl 2 dəfə zərbə alması tələb olunur:Oyunun sonuna qədər özünün 2 can üstünlüyündən istifadə edərək Mafiyanı və Şəhər sakinlərini tək-tək öldürüb, oyunda təkbaşına sağ qalan sonuncu qatil olduqda qalib gəlir.",
+            "Canlı Bomba": "Üzərində partlayıcılar olan sakin. Gecə onu öldürən və ya gündüz onu asan şəxsləri özü ilə bərabər partladıb öldürür:Bütün Mafiya üzvlərini və bütün Müstəqil qatilləri tapıb səsvermə və ya digər Şəhər rollarının köməyi ilə tamamilə oyundan təmizlədikdə (özünü partladıb düşmən öldürsə belə Şəhər qazananda) qalib gəlir."
         };
 
         db.ref('rooms/' + code).once('value', snap => {
