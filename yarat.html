@@ -40,6 +40,112 @@
             .p-item { width: 45%; font-size: 1rem; }
             #countdownText { font-size: 5rem; }
         }
+
+        /* ÇAT SİSTEMİ CSS AYARLARI */
+        #chatBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #000;
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            padding: 12px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+            transition: 0.3s;
+        }
+        #chatBtn:hover {
+            background: #ff0000;
+            color: #fff;
+        }
+        #chatPanel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 320px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 2px solid #ff0000;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.7);
+        }
+        #chatPanel.open {
+            right: 0;
+        }
+        .chat-header {
+            padding: 15px;
+            background: #111;
+            border-bottom: 1px solid #ff0000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h3 {
+            color: #ff0000;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+        .close-chat {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            word-break: break-word;
+            border-left: 3px solid #ff0000;
+        }
+        .msg span {
+            color: #4ade80;
+            font-weight: bold;
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid #ff0000;
+            background: #111;
+            display: flex;
+            gap: 5px;
+        }
+        #chatInput {
+            flex: 1;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #ff0000;
+            color: #fff;
+            outline: none;
+            font-family: monospace;
+        }
+        #sendChatBtn {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -73,17 +179,16 @@
         </div>
     </div>
 
-    <div id="chatBtn" onclick="toggleChat()" style="position: fixed; bottom: 20px; right: 20px; background: #000; border: 2px solid #ff0000; color: #ff0000; padding: 12px 20px; font-weight: bold; cursor: pointer; z-index: 1000; text-transform: uppercase;">Çat <span id="chatNotif" style="display:none; color:#4ade80;">●</span></div>
-
-    <div id="chatPanel" style="position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background: rgba(0,0,0,0.95); border-left: 2px solid #ff0000; z-index: 2000; display: flex; flex-direction: column; transition: right 0.3s ease;">
-        <div style="padding: 15px; border-bottom: 1px solid #ff0000; display: flex; justify-content: space-between; align-items: center; background: #111;">
-            <span style="color: #ff0000; font-weight: bold;">OTAQ ÇATI</span>
-            <button onclick="toggleChat()" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 1.2rem;">✕</button>
+    <div id="chatBtn" style="display: none;" onclick="toggleChat()">Çat <span id="chatNotif" style="display:none; color:#4ade80;">●</span></div>
+    <div id="chatPanel">
+        <div class="chat-header">
+            <h3>Otaq Çatı</h3>
+            <button class="close-chat" onclick="toggleChat()">&times;</button>
         </div>
-        <div id="chatMessages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; text-align: left;"></div>
-        <div style="padding: 10px; display: flex; gap: 5px; border-top: 1px solid #222; background: #111;">
-            <input type="text" id="chatInput" placeholder="Mesaj yaz..." style="flex: 1; padding: 10px; background: #000; border: 1px solid #ff0000; color: white; outline: none;">
-            <button onclick="sendMessage()" style="padding: 10px; background: #ff0000; color: white; border: none; cursor: pointer; font-weight: bold;">GÖNDƏR</button>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Mesaj yazın...">
+            <button id="sendChatBtn" onclick="sendMessage()">Göndər</button>
         </div>
     </div>
 
@@ -91,33 +196,41 @@
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        
         let localPlayerCount = 0;
         let countdownInt = null;
+        let chatListenerRef = null;
 
         document.getElementById("limitRange").oninput = function() { 
             document.getElementById("limitVal").innerText = this.value; 
         };
 
-        // Ümumi Çıxış Funksiyası
         function leaveRoom() {
             const code = new URLSearchParams(window.location.search).get('join');
-            const me = localStorage.getItem("mafia_nickname");
+            const me = localStorage.getItem("mafia_nickname") || "Agent";
             if(code && me) {
                 const safeMe = me.replace(/[.#$/\[\]]/g, "_");
                 const ref = db.ref('rooms/' + code);
                 ref.once('value').then(s => {
                     const room = s.val(); 
                     if(!room) return;
+                    
+                    if(chatListenerRef) {
+                        db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
+                    }
+
                     ref.child('players/' + safeMe).remove().then(() => {
                         if(room.host === me) {
                             const pKeys = room.players ? Object.keys(room.players).filter(k => k !== safeMe) : [];
-                            if(pKeys.length > 0) ref.update({ host: room.players[pKeys[0]] });
-                            else ref.remove();
+                            if(pKeys.length > 0) {
+                                ref.update({ host: room.players[pKeys[0]] });
+                            } else {
+                                ref.remove();
+                            }
                         }
-                    }).then(() => location.href = 'index.html');
-                }).catch(err => {
-                    console.error(err);
-                    location.href = 'index.html';
+                    }).then(() => {
+                        location.href = 'index.html';
+                    });
                 });
             } else {
                 location.href = 'index.html';
@@ -135,13 +248,9 @@
             }
             const limit = document.getElementById("limitRange").value;
             const code = "U" + Math.floor(100000 + Math.random() * 899999);
-            const user = localStorage.getItem("mafia_nickname");
-            if(!user) {
-                alert("Nickname tapılmadı! Zəhmət olmasa əvvəlcə ana səhifədə adınızı daxil edin.");
-                location.href = "index.html";
-                return;
-            }
+            const user = localStorage.getItem("mafia_nickname") || "Anonim";
             const safeUser = user.replace(/[.#$/\[\]]/g, "_");
+            
             const data = { 
                 roomName: name, 
                 maxPlayers: parseInt(limit), 
@@ -151,118 +260,31 @@
             };
             data.players[safeUser] = user;
             
-            db.ref('rooms/' + code).set(data)
-            .then(() => { 
+            db.ref('rooms/' + code).set(data).then(() => { 
                 location.href = "yarat.html?join=" + code; 
-            })
-            .catch(err => {
-                alert("Firebase İcazə Xətası! Otaq yaradıla bilmədi. Firebase-də Realtime Database -> Rules hissəsinə daxil olub həm '.read' həm də '.write' dəyərlərini true edin. Xəta mesajı: " + err.message);
-                console.error(err);
             });
         };
 
         document.getElementById("startGameBtn").onclick = function() {
             const code = new URLSearchParams(window.location.search).get('join');
             if(code) {
-                db.ref('rooms/' + code + '/gameState').set('countdown').catch(err => {
-                    alert("Oyunu başlatmaq mümkün olmadı: " + err.message);
-                });
+                db.ref('rooms/' + code + '/gameState').set('countdown');
             }
-        };
-
-        window.onload = function() {
-            const code = new URLSearchParams(window.location.search).get('join');
-            if(!code) return;
-            const me = localStorage.getItem("mafia_nickname");
-            if(!me) {
-                alert("Nickname tapılmadı! Giriş səhifəsinə yönləndirilirsiniz.");
-                location.href = "index.html";
-                return;
-            }
-            const safeMe = me.replace(/[.#$/\[\]]/g, "_");
-            
-            // Otaq çatı dinləyicisini aktiv edirik
-            listenToChat(code, me);
-
-            // Öncə oyunçunu otağa yazırıq, daha sonra asinxron yarışın qarşısını almaq üçün dinləyicini qoşuruq
-            db.ref('rooms/' + code + '/players/' + safeMe).set(me).then(() => {
-                db.ref('rooms/' + code).on('value', s => {
-                    const room = s.val();
-                    if(!room) { 
-                        alert("Otaq tapılmadı və ya bazadan silinib!");
-                        location.href = "index.html"; 
-                        return; 
-                    }
-
-                    const isHost = (me === room.host);
-                    const currentPlayersCount = room.players ? Object.keys(room.players).length : 0;
-                    
-                    if (room.gameState === 'countdown' && localPlayerCount > 0 && currentPlayersCount !== localPlayerCount) {
-                        if (isHost) db.ref('rooms/' + code + '/gameState').set('waiting');
-                    }
-                    localPlayerCount = currentPlayersCount;
-                    
-                    document.getElementById("setupArea").style.display = "none";
-                    document.getElementById("lobbyArea").style.display = "block";
-                    document.getElementById("codeTag").innerText = "KOD: " + code;
-                    document.getElementById("codeTag").style.display = "block";
-                    document.getElementById("roomTitle").innerText = room.roomName;
-                    document.getElementById("startGameBtn").style.display = isHost ? "inline-block" : "none";
-                    
-                    const pDiv = document.getElementById("playersDiv");
-                    pDiv.innerHTML = "";
-                    Object.values(room.players || {}).forEach(p => {
-                        pDiv.innerHTML += `<div class="p-item">${p===room.host ? '<span class="host-tag">HOST</span>' : ''}${p}</div>`;
-                    });
-                    
-                    if (room.gameState === 'countdown') {
-                        document.getElementById('timerOverlay').style.display = 'flex';
-                        if (!countdownInt) {
-                            let t = 5;
-                            document.getElementById('countdownText').innerText = t;
-                            countdownInt = setInterval(() => {
-                                t--;
-                                document.getElementById('countdownText').innerText = t;
-                                if (t <= 0) {
-                                    clearInterval(countdownInt);
-                                    if (isHost) db.ref('rooms/' + code + '/gameState').set('started');
-                                }
-                            }, 1000);
-                        }
-                    } else if (room.gameState === 'started') {
-                        location.href = "opening.html?join=" + code;
-                    } else {
-                        document.getElementById('timerOverlay').style.display = 'none';
-                        if (countdownInt) {
-                            clearInterval(countdownInt);
-                            countdownInt = null;
-                        }
-                    }
-                }, err => {
-                    alert("Firebase-dən məlumat oxunarkən xəta: " + err.message);
-                });
-            }).catch(err => {
-                alert("Otağa daxil olarkən verilənlər bazası xətası: " + err.message);
-            });
         };
 
         // ÇAT SİSTEMİ FUNKSİYALARI
         function toggleChat() {
             const panel = document.getElementById('chatPanel');
-            if (panel.style.right === "0px") {
-                panel.style.right = "-320px";
-            } else {
-                panel.style.right = "0px";
-                document.getElementById('chatNotif').style.display = 'none';
-            }
+            panel.classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
         }
 
         function sendMessage() {
             const code = new URLSearchParams(window.location.search).get('join');
-            const me = localStorage.getItem("mafia_nickname");
+            const me = localStorage.getItem("mafia_nickname") || "Agent";
             const input = document.getElementById('chatInput');
             const txt = input.value.trim();
-            if(!txt || !code || !me) return;
+            if(!txt || !code) return;
             
             db.ref('rooms/' + code + '/chat').push({
                 sender: me,
@@ -279,18 +301,102 @@
             }
         });
 
-        function listenToChat(code, me) {
-            db.ref('rooms/' + code + '/chat').on('child_added', snap => {
+        function listenToChat(code) {
+            const me = localStorage.getItem("mafia_nickname") || "Agent";
+            const box = document.getElementById('chatMessages');
+            box.innerHTML = ""; 
+            
+            if(chatListenerRef) {
+                db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
+            }
+
+            chatListenerRef = db.ref('rooms/' + code + '/chat').on('child_added', snap => {
                 const data = snap.val();
-                const box = document.getElementById('chatMessages');
-                box.innerHTML += `<div class="msg" style="margin-bottom: 5px; word-break: break-all;"><span style="color:#4ade80; font-weight:bold;">${data.sender}:</span> ${data.msg}</div>`;
+                if(!data) return;
+                
+                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
                 box.scrollTop = box.scrollHeight;
+                
                 const panel = document.getElementById('chatPanel');
-                if(panel.style.right !== "0px" && data.sender !== me) {
+                if(!panel.classList.contains('open') && data.sender !== me) {
                     document.getElementById('chatNotif').style.display = 'inline';
                 }
             });
         }
+
+        window.onload = function() {
+            const code = new URLSearchParams(window.location.search).get('join');
+            if(!code) {
+                document.getElementById("setupArea").style.display = "block";
+                document.getElementById("lobbyArea").style.display = "none";
+                document.getElementById("chatBtn").style.display = "none";
+                return;
+            }
+            
+            const me = localStorage.getItem("mafia_nickname") || "Agent";
+            const safeMe = me.replace(/[.#$/\[\]]/g, "_");
+            
+            db.ref('rooms/' + code + '/players/' + safeMe).set(me).then(() => {
+                document.getElementById("chatBtn").style.display = "block";
+                listenToChat(code);
+            });
+
+            db.ref('rooms/' + code).on('value', s => {
+                const room = s.val();
+                if(!room) { 
+                    location.href = "index.html"; 
+                    return; 
+                }
+                
+                const isHost = (me === room.host);
+                const currentPlayersCount = room.players ? Object.keys(room.players).length : 0;
+                
+                if (room.gameState === 'countdown' && localPlayerCount > 0 && currentPlayersCount !== localPlayerCount) {
+                    if (isHost) db.ref('rooms/' + code + '/gameState').set('waiting');
+                }
+                
+                localPlayerCount = currentPlayersCount;
+                document.getElementById("setupArea").style.display = "none";
+                document.getElementById("lobbyArea").style.display = "block";
+                document.getElementById("codeTag").innerText = "KOD: " + code;
+                document.getElementById("codeTag").style.display = "block";
+                document.getElementById("roomTitle").innerText = room.roomName;
+                document.getElementById("startGameBtn").style.display = isHost ? "inline-block" : "none";
+                
+                const pDiv = document.getElementById("playersDiv");
+                pDiv.innerHTML = "";
+                Object.values(room.players || {}).forEach(p => {
+                    pDiv.innerHTML += `<div class="p-item">${p === room.host ? '<span class="host-tag">HOST</span>' : ''}${p}</div>`;
+                });
+                
+                if (room.gameState === 'countdown') {
+                    document.getElementById('timerOverlay').style.display = 'flex';
+                    if (!countdownInt) {
+                        let t = 5;
+                        document.getElementById('countdownText').innerText = t;
+                        countdownInt = setInterval(() => {
+                            t--;
+                            document.getElementById('countdownText').innerText = t;
+                            if (t <= 0) {
+                                clearInterval(countdownInt);
+                                if (isHost) db.ref('rooms/' + code + '/gameState').set('started');
+                            }
+                        }, 1000);
+                    }
+                } else if (room.gameState === 'started') {
+                    if(chatListenerRef) {
+                        db.ref('rooms/' + code + '/chat').off('child_added', chatListenerRef);
+                    }
+                    location.href = "opening.html?join=" + code;
+                } else {
+                    document.getElementById('timerOverlay').style.display = 'none';
+                    if (countdownInt) {
+                        clearInterval(countdownInt);
+                        countdownInt = null;
+                    }
+                }
+            });
+        };
     </script>
 </body>
 </html>
