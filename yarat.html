@@ -11,248 +11,219 @@
         body, html { height: 100%; width: 100%; background-color: #000; color: white; overflow-x: hidden; }
         .bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg { width: 100%; height: 100%; background: url('babba.jpg') center/cover no-repeat; filter: brightness(0.3); }
-
-        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; background: rgba(0,0,0,0.9); z-index: 100; font-weight: bold; }
-
-        .container { margin: 80px auto; width: 95%; max-width: 1000px; background: rgba(0,0,0,0.85); padding: 25px; border: 2px solid #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.2); text-align: center; }
-        h1, h2 { color: #ff0000; text-transform: uppercase; margin-bottom: 20px; }
-
-        .setup-row { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; }
-        input[type="text"] { padding: 15px; border: 2px solid #ff0000; background: #000; color: white; flex: 1; min-width: 250px; text-align: center; outline: none; }
-        .range-box { flex: 1; min-width: 200px; text-align: center; }
-        input[type="range"] { width: 100%; accent-color: #ff0000; }
         
-        .btn { padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border: 2px solid #ff0000; background: none; color: #ff0000; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn:hover { background: #ff0000; color: white; }
-
-        /* 5x6 CƏDVƏL SİSTEMİ */
-        .main-area { display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); gap: 8px; width: 100%; max-width: 900px; flex-grow: 1; margin-top: 20px; }
-        .player-card { background: rgba(0,0,0,0.7); border: 2px solid #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; text-align: center; color: #555; position: relative; }
-        .player-card.filled { border-color: #00ff00; color: white; background: rgba(0, 255, 0, 0.1); box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); }
-        .p-name { font-size: clamp(0.7rem, 2vw, 1rem); font-weight: bold; word-break: break-word; }
-        .host-tag { color: #4ade80; font-size: 0.7rem; border: 1px solid #4ade80; padding: 2px 5px; font-weight: bold; position: absolute; top: 5px; right: 5px; background: #000; }
-
-        #timerOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #countdownText { font-size: 8rem; color: #ff0000; text-shadow: 0 0 30px #ff0000; margin-bottom: 20px; }
-        .timer-info { color: white; font-size: 1.2rem; max-width: 80%; margin-bottom: 30px; }
+        #codeTag { position: fixed; top: 10px; right: 10px; color: #4ade80; border: 1px solid #4ade80; padding: 10px; background: rgba(0,0,0,0.9); font-weight: bold; font-size: 1.2rem; z-index: 100; border-radius: 5px; }
         
-        .header-btn { background: #555; color: white; border: none; padding: 10px 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; }
+        .lobby-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; position: relative; z-index: 10; }
+        h1 { font-size: 2.5rem; color: #ff0000; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,0,0,0.4); text-align: center; }
+        .sub-title { font-size: 1rem; color: #aaa; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        
+        .players-box { background: rgba(0,0,0,0.85); border: 2px solid #ff0000; width: 100%; max-width: 600px; border-radius: 8px; padding: 20px; box-shadow: 0 0 20px rgba(255,0,0,0.2); margin-bottom: 30px; }
+        .box-title { font-size: 1.2rem; color: #ff0000; font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; }
+        
+        .players-list { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 5px; }
+        .player-item { background: rgba(255,255,255,0.05); border: 1px solid #333; padding: 12px 15px; border-radius: 5px; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.3s ease; }
+        .player-item.is-me { border-color: #4ade80; background: rgba(74,222,128,0.05); color: #4ade80; }
+        .host-badge { background: #ff0000; color: white; font-size: 0.75rem; padding: 2px 6px; font-weight: bold; border-radius: 3px; text-transform: uppercase; }
+        
+        .start-btn { background: #ff0000; color: white; border: none; padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.2s; box-shadow: 0 0 15px rgba(255,0,0,0.4); display: none; }
+        .start-btn:hover { background: #cc0000; box-shadow: 0 0 25px rgba(255,0,0,0.7); transform: scale(1.03); }
+        .wait-msg { font-size: 1.2rem; color: #eab308; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; animation: pulse 1.5s infinite; text-align: center; display: none; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
-    <script>
-        history.pushState(null, null, window.location.href);
-        window.addEventListener('popstate', function () { history.pushState(null, null, window.location.href); });
-    </script>
 
     <div class="bg-container"><div class="bg"></div></div>
-    <div id="codeTag" style="display:none;"></div>
-    
-    <div id="timerOverlay">
-        <h1 id="countdownText">5</h1>
-        <p class="timer-info">OYUN BAŞLAYIR...<br><span style="color:#ff4444; font-size:0.9rem;">(Kimsə çıxsa sayım dayanacaq)</span></p>
-        <button type="button" class="btn" style="border-color:#fff; color:#fff;" id="cancelBtn" onclick="leaveRoom()">LƏĞV ET / ÇIX</button>
-    </div>
+    <div id="codeTag">OTAQ KODU: <span id="roomCodeDisplay">------</span></div>
 
-    <div id="setupArea" class="container">
-        <button class="header-btn" style="float:left;" onclick="window.location.href='index.html'">GERİ QAYIT</button>
-        <div style="clear:both;"></div>
-        <h1>OTAQ AYARLARI</h1>
-        <div class="setup-row">
-            <input type="text" id="roomNameInp" placeholder="OTAQ ADI">
-            <div class="range-box">
-                <label>LİMİT: <span id="limitVal" style="color:red; font-weight:bold;">5</span></label>
-                <input type="range" id="limitRange" min="5" max="30" value="5">
+    <div class="lobby-container">
+        <h1>Gözləmə Salonu</h1>
+        <div class="sub-title" id="statusSub">Oyunçuların daxil olması gözlənilir</div>
+
+        <div class="players-box">
+            <div class="box-title">
+                <span>Oyunçular</span>
+                <span id="playerCountDisplay">(0/30)</span>
             </div>
-            <button type="button" class="btn" id="startBtn">OTAĞI AÇ</button>
-        </div>
-    </div>
-
-    <div id="lobbyArea" class="container" style="display:none; max-width: 1100px;">
-        <button class="header-btn" style="float:left;" onclick="leaveRoom()">OTAQDAN ÇIX</button>
-        <div style="clear:both;"></div>
-        <h2 id="roomTitle"></h2>
-        <h3 style="color: #4ade80;">Oyunçular: <span id="playerCount">0</span> / <span id="maxLimitText">30</span></h3>
-        
-        <div class="main-area">
-            <div class="grid-container" id="lobbyGrid"></div>
+            <div class="players-list" id="playersListContainer"></div>
         </div>
 
-        <div style="margin-top: 30px;">
-            <button type="button" class="btn" id="startGameBtn" style="display:none; background:#00ff00; color:black; border:none; box-shadow:0 0 15px #00ff00;">OYUNU BAŞLAT</button>
-            <p id="statusText" style="color: #aaa; margin-top: 10px;">Hostun oyunu başlatması gözlənilir...</p>
-        </div>
+        <button class="start-btn" id="startGameBtn" onclick="executeStartGame()">OYUNU BAŞLAT</button>
+        <div class="wait-msg" id="waitMessageEl">HOSTUN OYUNU BAŞLATMASI GÖZLƏNİLİR...</div>
     </div>
 
     <script>
+        // Firebase Bağlantısı
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // URL-dən Otaq Kodunu və Oyunçu adını oxuyuruq
         const params = new URLSearchParams(window.location.search);
         const code = params.get('join');
         const me = localStorage.getItem("mafia_nickname");
-        if(!me) window.location.href = "index.html";
-        const safeMe = me.replace(/[.#$/\[\]]/g, "_");
+        const safeMe = me ? me.replace(/[.#$/\[\]]/g, "_") : null;
+
+        if(!code || !me) {
+            window.location.href = "index.html";
+        }
+
+        document.getElementById('roomCodeDisplay').innerText = code;
 
         let isHost = false;
-        let localPlayerCount = 0;
-        let countdownInt = null;
         let playersData = {};
-        let maxLimit = 30;
 
-        // Oyunçu sayına görə unikal rolların tam siyahısı
-        const poolByCount = {
-            5: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"],
-            6: ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen", "Hakim"],
-            7: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen"],
-            8: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen", "Bələdiyyə Sədri"],
-            9: ["Don", "Sadə Mafiya", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Fenomen", "Bələdiyyə Sədri", "Jurnalist"],
-            10: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist"],
-            11: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi"],
-            12: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi"],
-            13: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi", "Gözəlçə"],
-            14: ["Don", "Sadə Mafiya", "Vəkil", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Xəbərçi", "Gözəlçə", "Fenomen"],
-            15: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər"],
-            16: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi"],
-            17: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen"],
-            18: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen", "Nəzarətçi"],
-            19: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Psixopat", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Xəbərçi", "Fenomen", "Nəzarətçi", "Medyum"],
-            20: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız"],
-            21: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis"],
-            22: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı"],
-            23: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Xəbərçi"],
-            24: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Xəbərçi"],
-            25: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim"],
-            26: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"],
-            27: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"],
-            28: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum"],
-            29: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum"],
-            30: ["Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi", "Medyum", "Xəbərçi"]
-        };
-
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        // Otaq məlumatlarını real-vaxt rejimində izləyirik
+        db.ref('rooms/' + code).on('value', snapshot => {
+            const room = snapshot.val();
+            if(!room) {
+                alert("Otaq tapılmadı və ya silinib!");
+                window.location.href = "index.html";
+                return;
             }
-            return array;
-        }
 
-        document.getElementById("limitRange").oninput = function() { document.getElementById("limitVal").innerText = this.value; };
+            // Əgər oyun day_discuss və ya başqa mərhələyə keçibsə, hamını avtomatik oyuna yönləndirir
+            if(room.gameState && room.gameState !== 'waiting') {
+                window.location.href = "oyun.html?join=" + code;
+                return;
+            }
 
-        function leaveRoom() {
-            if(!code) { location.href = 'index.html'; return; }
-            db.ref('rooms/' + code + '/players/' + safeMe).remove().then(() => { location.href = 'index.html'; });
-        }
+            playersData = room.players || {};
+            isHost = (room.host === me);
 
-        if(!code) {
-            document.getElementById("startBtn").onclick = function() {
-                const name = document.getElementById("roomNameInp").value.trim();
-                if(!name) return;
-                const limit = parseInt(document.getElementById("limitRange").value);
-                const newCode = "U" + Math.floor(100000 + Math.random() * 899999);
+            // UI yeniləmələri
+            renderPlayers(room.host);
+            toggleControlButtons();
+        });
+
+        // Oyunçuların Siyahısını Ekrana Çıxarmaq
+        function renderPlayers(hostName) {
+            const container = document.getElementById('playersListContainer');
+            container.innerHTML = "";
+
+            const keys = Object.keys(playersData);
+            document.getElementById('playerCountDisplay').innerText = `(${keys.length}/30)`;
+
+            keys.forEach(pKey => {
+                const pName = playersData[pKey];
+                const item = document.createElement('div');
+                item.className = 'player-item';
                 
-                db.ref('rooms/' + newCode).set({ 
-                    roomName: name, maxPlayers: limit, host: me, gameState: 'waiting', players: { [safeMe]: me } 
-                }).then(() => { location.href = "yarat.html?join=" + newCode; });
-            };
-        } else {
-            document.getElementById("setupArea").style.display = "none";
-            document.getElementById("lobbyArea").style.display = "block";
-            document.getElementById("codeTag").innerText = "KOD: " + code;
-            document.getElementById("codeTag").style.display = "block";
-            
-            db.ref('rooms/' + code + '/players/' + safeMe).set(me);
-            listenToRoom();
-        }
+                if(pName === me) item.classList.add('is-me');
 
-        function listenToRoom() {
-            db.ref('rooms/' + code).on('value', s => {
-                const room = s.val();
-                if(!room) { location.href = "index.html"; return; }
-
-                isHost = (me === room.host);
-                playersData = room.players || {};
-                maxLimit = room.maxPlayers || 30;
-                const pKeys = Object.keys(playersData);
-                
-                document.getElementById('playerCount').innerText = pKeys.length;
-                document.getElementById('maxLimitText').innerText = maxLimit;
-                document.getElementById("roomTitle").innerText = room.roomName;
-                document.getElementById("startGameBtn").style.display = isHost ? "inline-block" : "none";
-                document.getElementById("statusText").style.display = isHost ? "none" : "block";
-
-                buildGrid(pKeys, room.host);
-
-                if (room.gameState === 'countdown' && localPlayerCount > 0 && pKeys.length !== localPlayerCount) {
-                    if (isHost) db.ref('rooms/' + code + '/gameState').set('waiting');
+                let badge = "";
+                if(pName === hostName) {
+                    badge = `<span class="host-badge">HOST</span>`;
                 }
-                localPlayerCount = pKeys.length;
 
-                if (room.gameState === 'countdown') {
-                    document.getElementById('timerOverlay').style.display = 'flex';
-                    if (!countdownInt) {
-                        let t = 5;
-                        document.getElementById('countdownText').innerText = t;
-                        countdownInt = setInterval(() => {
-                            t--;
-                            document.getElementById('countdownText').innerText = t;
-                            if (t <= 0) {
-                                clearInterval(countdownInt);
-                                if (isHost) assignRolesAndStart(pKeys);
-                            }
-                        }, 1000);
-                    }
-                } else if (room.gameState === 'opening') {
-                    location.href = "opening.html?join=" + code;
-                } else {
-                    document.getElementById('timerOverlay').style.display = 'none';
-                    if (countdownInt) { clearInterval(countdownInt); countdownInt = null; }
-                }
+                item.innerHTML = `<span>${pName}</span> ${badge}`;
+                container.appendChild(item);
             });
         }
 
-        function buildGrid(playerKeys, hostName) {
-            const grid = document.getElementById('lobbyGrid');
-            grid.innerHTML = "";
-
-            for(let i=0; i<30; i++) {
-                const card = document.createElement('div');
-                card.className = 'player-card';
-
-                if(i < playerKeys.length) {
-                    const pName = playersData[playerKeys[i]];
-                    card.classList.add('filled');
-                    card.innerHTML = `${pName === hostName ? '<div class="host-tag">HOST</div>' : ''}<div class="p-name">${pName}</div>`;
-                } else if (i < maxLimit) {
-                    card.innerHTML = `<div class="p-name" style="color:#555;">BOŞ</div>`;
-                } else {
-                    card.innerHTML = `<div class="p-name" style="color:#222;">QAPALI</div>`;
-                    card.style.borderColor = "#111";
-                    card.style.background = "rgba(0,0,0,0.9)";
-                }
-                grid.appendChild(card);
+        // Oyunçu növünə görə düymələrin açılıb-bağlanması
+        function toggleControlButtons() {
+            if(isHost) {
+                document.getElementById('startGameBtn').style.display = 'block';
+                document.getElementById('waitMessageEl').style.display = 'none';
+                document.getElementById('statusSub').innerText = "Sən hostsan. Hamı yığılandan sonra oyunu başlada bilərsən.";
+            } else {
+                document.getElementById('startGameBtn').style.display = 'none';
+                document.getElementById('waitMessageEl').style.display = 'block';
+                document.getElementById('statusSub').innerText = "Oyunun başlaması üçün hostun təsdiqi gözlənilir.";
             }
         }
 
-        document.getElementById("startGameBtn").onclick = function() {
-            const pKeys = Object.keys(playersData);
-            if(pKeys.length < 3) { alert("Başlamaq üçün ən az 3 oyunçu lazımdır!"); return; }
-            db.ref('rooms/' + code + '/gameState').set('countdown');
-        };
+        // OYUNU BAŞLATMA MEXANİZMİ (MƏCBURİ MAFİYA ZƏMANƏTLİ)
+        function executeStartGame() {
+            if(!isHost) return;
 
-        function assignRolesAndStart(players) {
-            const pCount = players.length;
-            let selectedPool = (pCount >= 5 && pCount <= 30) ? [...poolByCount[pCount]] : ["Sadə Mafiya", "Həkim", "Detektiv", "Bələdiyyə Sədri", "Fenomen"];
-            const shuffledRoles = shuffle(selectedPool);
-            let assigned = {};
+            const pKeys = Object.keys(playersData);
+            const playerCount = pKeys.length;
+
+            if(playerCount < 2) {
+                alert("Oyunu başlatmaq üçün otaqda ən azı 2 nəfər oyunçu olmalıdır!");
+                return;
+            }
+
+            let rolesPool = [];
+
+            // Sənin sənədindəki rolların paylanma sırası əsasında hovuz yaradırıq
+            if (playerCount === 2) {
+                rolesPool = ["Sadə Mafiya", "Dinc Sakin"];
+            } else if (playerCount === 3) {
+                rolesPool = ["Sadə Mafiya", "Dinc Sakin", "Həkim"];
+            } else if (playerCount === 4) {
+                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim"];
+            } else if (playerCount === 5) {
+                rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim", "Detektiv"];
+            } else {
+                // Əgər oyunçu sayı 5-dən çoxdursa, sənin sənədindəki əsas rol sırasını doldururuq
+                const masterRolesList = [
+                    "Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", 
+                    "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", 
+                    "Oğru", "Həkim", "Detektiv", "Keşiş", "Cismani mühafizəçi", 
+                    "Bələdiyyə Sədri", "Jurnalist", "Türmə rəisi", "Gözəlçə", 
+                    "Eros", "Aşiqlər", "Fenomen", "Fedai", "Yaddaşsız", 
+                    "Gizli Polis", "Qan Qardaşı", "Hakim", "Nəzarətçi"
+                ];
+
+                for (let i = 0; i < playerCount; i++) {
+                    if (masterRolesList[i]) {
+                        rolesPool.push(masterRolesList[i]);
+                    } else {
+                        rolesPool.push("Dinc Sakin"); // Siyahı bitərsə dinc sakin əlavə et
+                    }
+                }
+            }
+
+            // --- MULTIPLAYER/TEST MAFİYA TƏHLÜKƏSİZLİK QALXANI ---
+            // Mafiya komandasına aid olan bütün mümkün rolların siyahısı:
+            const mafiaTeamRoles = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya"];
             
-            players.forEach((pKey, index) => { assigned[pKey] = shuffledRoles[index] || "Dinc Sakin"; });
-            db.ref('rooms/' + code).update({ gameState: 'opening', assignedRoles: assigned });
+            // Hazırlanmış rolar hovuzunda mafiya komandasından kiminsə olub-olmadığını yoxlayırıq
+            let containsMafia = rolesPool.some(role => mafiaTeamRoles.includes(role));
+
+            // ƏGƏR HEÇ BİR MAFİYA YOKDURSA (Məsələn, səhvən pool boş qalıbsa və ya fərqli sayda test edilirsə)
+            if (!containsMafia) {
+                // Siyahının tam olaraq birinci rolunu məcburi surətdə Sadə Mafiya edirik!
+                rolesPool[0] = "Sadə Mafiya";
+            }
+            // ----------------------------------------------------
+
+            // Rolları tamamilə təsadüfi qarışdırırıq (Fisher-Yates Shuffle algoritmi)
+            for (let i = rolesPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                let temp = rolesPool[i];
+                rolesPool[i] = rolesPool[j];
+                rolesPool[j] = temp;
+            }
+
+            // Qarışdırılmış rolları oyunçuların safe key-lərinə mənsub edirik
+            let finalAssignedRoles = {};
+            pKeys.forEach((playerKey, index) => {
+                finalAssignedRoles[playerKey] = rolesPool[index];
+            });
+
+            // Firebase-də otaq vəziyyətini yeniləyirik. 
+            // Oyunu birbaşa 30 saniyəlik 'day_discuss' (Müzakirə mərhələsi) ilə başladırıq.
+            db.ref('rooms/' + code).update({
+                assignedRoles: finalAssignedRoles,
+                gameState: 'day_discuss',
+                phaseEndTime: Date.now() + (30 * 1000),
+                votes: null,
+                eliminationResult: null,
+                winner: null,
+                deadPlayers: null
+            }).then(() => {
+                // Hostun özünü də avtomatik yönləndirir
+                window.location.href = "oyun.html?join=" + code;
+            }).catch(err => {
+                alert("Oyun başladılarkən verilənlər bazası xətası baş verdi: " + err.message);
+            });
         }
     </script>
 </body>
