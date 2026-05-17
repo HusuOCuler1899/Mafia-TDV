@@ -26,9 +26,31 @@
         .player-item.is-me { border-color: #4ade80; background: rgba(74,222,128,0.05); color: #4ade80; }
         .host-badge { background: #ff0000; color: white; font-size: 0.75rem; padding: 2px 6px; font-weight: bold; border-radius: 3px; text-transform: uppercase; }
         
-        .start-btn { background: #ff0000; color: white; border: none; padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.2s; box-shadow: 0 0 15px rgba(255,0,0,0.4); display: none; }
+        .start-btn { background: #ff0000; color: white; border: none; padding: 15px 40px; font-size: 1.3rem; font-weight: bold; border-radius: 5px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.2s; box-shadow: 0 0 15px rgba(255,0,0,0.4); display: none; margin-bottom: 15px; }
         .start-btn:hover { background: #cc0000; box-shadow: 0 0 25px rgba(255,0,0,0.7); transform: scale(1.03); }
-        .wait-msg { font-size: 1.2rem; color: #eab308; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; animation: pulse 1.5s infinite; text-align: center; display: none; }
+        .wait-msg { font-size: 1.2rem; color: #eab308; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; animation: pulse 1.5s infinite; text-align: center; display: none; margin-bottom: 15px; }
+        
+        /* ÇAT SİSTEMİ STILLƏRİ */
+        #chatBtn { position: fixed; bottom: 20px; right: 20px; background: #000; border: 2px solid #ff0000; color: #ff0000; padding: 15px 25px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 5px; z-index: 1000; text-transform: uppercase; box-shadow: 0 0 10px rgba(255,0,0,0.3); transition: 0.3s; }
+        #chatBtn:hover { background: #ff0000; color: #000; box-shadow: 0 0 20px rgba(255,0,0,0.6); }
+        #chatNotif { display: none; color: #4ade80; margin-left: 5px; font-size: 1.2rem; }
+        
+        #chatPanel { position: fixed; top: 0; right: -400px; width: 380px; height: 100%; background: rgba(0,0,0,0.95); border-left: 3px solid #ff0000; box-shadow: -10px 0 30px rgba(0,0,0,0.7); z-index: 2000; display: flex; flex-direction: column; transition: right 0.4s cubic-bezier(0.1, 0.9, 0.2, 1); }
+        #chatPanel.open { right: 0; }
+        
+        .chat-header { background: #111; border-bottom: 2px solid #ff0000; padding: 20px; font-size: 1.3rem; font-weight: bold; color: #ff0000; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; }
+        .chat-close-btn { background: none; border: none; color: #aaa; font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
+        .chat-close-btn:hover { color: #ff0000; }
+        
+        #chatMessages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg { background: rgba(255,255,255,0.03); border: 1px solid #222; padding: 10px; border-radius: 5px; font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+        .msg span { color: #4ade80; font-weight: bold; margin-right: 5px; }
+        
+        .chat-input-area { padding: 15px; background: #111; border-top: 1px solid #222; display: flex; gap: 10px; }
+        #chatInput { flex: 1; background: #000; border: 1px solid #444; padding: 12px; color: white; font-size: 1rem; border-radius: 4px; outline: none; }
+        #chatInput:focus { border-color: #ff0000; }
+        .chat-send-btn { background: #ff0000; color: white; border: none; padding: 0 20px; font-weight: bold; font-size: 1rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .chat-send-btn:hover { background: #cc0000; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -55,13 +77,27 @@
         <div class="wait-msg" id="waitMessageEl">HOSTUN OYUNU BAŞLATMASI GÖZLƏNİLİR...</div>
     </div>
 
+    <div id="chatBtn" onclick="toggleChat()">Çat <span id="chatNotif">●</span></div>
+    
+    <div id="chatPanel">
+        <div class="chat-header">
+            <span>Otaq Çatı</span>
+            <button class="chat-close-btn" onclick="toggleChat()">✕</button>
+        </div>
+        <div id="chatMessages"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Mesajınızı yazın...">
+            <button class="chat-send-btn" onclick="sendMessage()">Göndər</button>
+        </div>
+    </div>
+
     <script>
         // Firebase Bağlantısı
         const firebaseConfig = { databaseURL: "https://tdv-mafia-default-rtdb.firebaseio.com/" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // URL-dən Otaq Kodunu və Oyunçu adını oxuyuruq
+        // URL parametrlərini və lokal yaddaşı oxuyuruq
         const params = new URLSearchParams(window.location.search);
         const code = params.get('join');
         const me = localStorage.getItem("mafia_nickname");
@@ -76,7 +112,7 @@
         let isHost = false;
         let playersData = {};
 
-        // Otaq məlumatlarını real-vaxt rejimində izləyirik
+        // Real-vaxt rejimində otaq datasını izləyirik
         db.ref('rooms/' + code).on('value', snapshot => {
             const room = snapshot.val();
             if(!room) {
@@ -85,7 +121,7 @@
                 return;
             }
 
-            // Əgər oyun day_discuss və ya başqa mərhələyə keçibsə, hamını avtomatik oyuna yönləndirir
+            // Oyun başlayıbsa, dərhal oyun sahəsinə yönləndirir
             if(room.gameState && room.gameState !== 'waiting') {
                 window.location.href = "oyun.html?join=" + code;
                 return;
@@ -94,12 +130,14 @@
             playersData = room.players || {};
             isHost = (room.host === me);
 
-            // UI yeniləmələri
             renderPlayers(room.host);
             toggleControlButtons();
         });
 
-        // Oyunçuların Siyahısını Ekrana Çıxarmaq
+        // Çat mesajlarını dinləməyə başlayırıq
+        listenToChat();
+
+        // Oyunçuların siyahısını yeniləyən funksiya
         function renderPlayers(hostName) {
             const container = document.getElementById('playersListContainer');
             container.innerHTML = "";
@@ -124,7 +162,7 @@
             });
         }
 
-        // Oyunçu növünə görə düymələrin açılıb-bağlanması
+        // Host və ya normal oyunçuya görə elementlərin idarə edilməsi
         function toggleControlButtons() {
             if(isHost) {
                 document.getElementById('startGameBtn').style.display = 'block';
@@ -137,7 +175,7 @@
             }
         }
 
-        // OYUNU BAŞLATMA MEXANİZMİ (MƏCBURİ MAFİYA ZƏMANƏTLİ)
+        // MƏCBURİ MAFİYA ZƏMANƏTLİ ROLLARI PAYLAMA VƏ OYUNU BAŞLATMA MEXANİZMİ
         function executeStartGame() {
             if(!isHost) return;
 
@@ -151,7 +189,7 @@
 
             let rolesPool = [];
 
-            // Sənin sənədindəki rolların paylanma sırası əsasında hovuz yaradırıq
+            // Oyunçu sayına görə rolların tam siyahısı
             if (playerCount === 2) {
                 rolesPool = ["Sadə Mafiya", "Dinc Sakin"];
             } else if (playerCount === 3) {
@@ -161,7 +199,7 @@
             } else if (playerCount === 5) {
                 rolesPool = ["Don", "Sadə Mafiya", "Dinc Sakin", "Həkim", "Detektiv"];
             } else {
-                // Əgər oyunçu sayı 5-dən çoxdursa, sənin sənədindəki əsas rol sırasını doldururuq
+                // 5 nəfərdən yuxarı olanda sənədindəki master siyahı tam tətbiq olunur
                 const masterRolesList = [
                     "Don", "Sadə Mafiya", "Vəkil", "Aypara", "Xəfiyyə Mafiya", 
                     "Hiyləgər Mafiya", "Psixopat", "Zəhərləyici", "Canlı Bomba", 
@@ -175,26 +213,23 @@
                     if (masterRolesList[i]) {
                         rolesPool.push(masterRolesList[i]);
                     } else {
-                        rolesPool.push("Dinc Sakin"); // Siyahı bitərsə dinc sakin əlavə et
+                        rolesPool.push("Dinc Sakin");
                     }
                 }
             }
 
-            // --- MULTIPLAYER/TEST MAFİYA TƏHLÜKƏSİZLİK QALXANI ---
-            // Mafiya komandasına aid olan bütün mümkün rolların siyahısı:
+            // --- MAFİYA ROLUNUN MUTLƏQ OLMASI NƏZARƏTİ ---
             const mafiaTeamRoles = ["Sadə Mafiya", "Don", "Vəkil", "Aypara", "Xəfiyyə Mafiya", "Hiyləgər Mafiya", "Gizli Mafiya"];
-            
-            // Hazırlanmış rolar hovuzunda mafiya komandasından kiminsə olub-olmadığını yoxlayırıq
             let containsMafia = rolesPool.some(role => mafiaTeamRoles.includes(role));
 
-            // ƏGƏR HEÇ BİR MAFİYA YOKDURSA (Məsələn, səhvən pool boş qalıbsa və ya fərqli sayda test edilirsə)
+            // Əgər hər hansı səbəbdən (məsələn, test mühitində fərqli saylarla girəndə) mafiya düşmürsə
             if (!containsMafia) {
-                // Siyahının tam olaraq birinci rolunu məcburi surətdə Sadə Mafiya edirik!
+                // Siyahının tam olaraq ən birinci rolunu məcburi surətdə Sadə Mafiya təyin edirik
                 rolesPool[0] = "Sadə Mafiya";
             }
             // ----------------------------------------------------
 
-            // Rolları tamamilə təsadüfi qarışdırırıq (Fisher-Yates Shuffle algoritmi)
+            // Fisher-Yates Shuffle qarışdırma alqoritmi
             for (let i = rolesPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 let temp = rolesPool[i];
@@ -202,14 +237,13 @@
                 rolesPool[j] = temp;
             }
 
-            // Qarışdırılmış rolları oyunçuların safe key-lərinə mənsub edirik
+            // Rolları oyunçuların ID-lərinə bağlayırıq
             let finalAssignedRoles = {};
             pKeys.forEach((playerKey, index) => {
                 finalAssignedRoles[playerKey] = rolesPool[index];
             });
 
-            // Firebase-də otaq vəziyyətini yeniləyirik. 
-            // Oyunu birbaşa 30 saniyəlik 'day_discuss' (Müzakirə mərhələsi) ilə başladırıq.
+            // Firebase üzərində otağı day_discuss (müzakirə) fazası ilə başladırıq
             db.ref('rooms/' + code).update({
                 assignedRoles: finalAssignedRoles,
                 gameState: 'day_discuss',
@@ -219,10 +253,50 @@
                 winner: null,
                 deadPlayers: null
             }).then(() => {
-                // Hostun özünü də avtomatik yönləndirir
                 window.location.href = "oyun.html?join=" + code;
             }).catch(err => {
                 alert("Oyun başladılarkən verilənlər bazası xətası baş verdi: " + err.message);
+            });
+        }
+
+        // ÇAT SİSTEMİ FUNKSİYALARI
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
+            document.getElementById('chatNotif').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const txt = input.value.trim();
+            if(!txt) return;
+            
+            db.ref('rooms/' + code + '/chat').push({
+                sender: me,
+                msg: txt,
+                time: Date.now()
+            });
+            input.value = "";
+        }
+
+        document.getElementById('chatInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") { 
+                event.preventDefault(); 
+                sendMessage(); 
+            }
+        });
+
+        function listenToChat() {
+            db.ref('rooms/' + code + '/chat').on('child_added', snap => {
+                const data = snap.val();
+                const box = document.getElementById('chatMessages');
+                box.innerHTML += `<div class="msg"><span>${data.sender}:</span> ${data.msg}</div>`;
+                box.scrollTop = box.scrollHeight;
+                
+                const panel = document.getElementById('chatPanel');
+                if(!panel.classList.contains('open') && data.sender !== me) {
+                    document.getElementById('chatNotif').style.display = 'inline';
+                }
             });
         }
     </script>
